@@ -9,30 +9,22 @@
  * @class [TangoRestApiRequest]
  * @property {string} url
  * @property {string} type GET|POST|PUT|DELETE
- * @property {object} transport
- * @property {object} eventbus
+ * @property {object} transport. fetch by default
  * @property {object} result
  * @property {object} failure
  */
+//TODO extend Request
 export class TangoRestApiRequest
     /** @lends  TangoRestApiRequest */
     {
-        constructor(url, transport = webix.ajax, eventbus = OpenAjax.hub){
+        constructor(url, options = {}, transport = fetch){
             this.url = url;
-            this.type = "";
             this.response = null;
             this.failure = null;
             this.transport = transport;
-            this.eventbus = eventbus;
+            this.options = options;
         }
 
-        /**
-         * @param {} resp
-         */
-        add_errors(resp){
-            resp.errors = resp.errors.map(function(error){ return TangoWebappHelpers.newTangoError(error)});
-            this._super(resp.errors);
-        }
         /**
          *
          * @event tango_rest_client.rest_failure
@@ -56,53 +48,34 @@ export class TangoRestApiRequest
          * @private
          */
         onSuccess(resp) {
-            let json = {};
-            if (resp.text().length > 0) {
-                json = resp.json();
-
-                if (json.quality === 'FAILURE') {
-                    //TODO
-                    // this.add_errors(json);
-                    this.failure = json;
-                    this.eventbus.publish("tango_rest_client.rest_failure", {data: this});
-                    throw json;
-                }
+            if(resp.ok){
+                return resp.json();
+            } else {
+                return resp.json().then(json => {
+                    throw json
+                });
             }
-            this.result = json;
-            this.eventbus.publish("tango_rest_client.rest_success", {data: this});
-            return json;
         }
 
         /**
          * @fires tango_webapp.rest_failure
          *
-         * @param resp
+         * @param {TypeError} resp
          * @private
          */
         onFailure(resp) {
-            let json;
-            try {
-                json = JSON.parse(resp.responseText);
-            } catch (e) {
-                json = {
-                    errors: [
-                        {
-                            reason: resp.status,
-                            description: resp.responseText ? resp.responseText : "Unspecified error",
-                            severity: 'ERR',
-                            origin: this.url
-                        }
-                    ],
-                    quality: 'FAILURE',
-                    timestamp: +new Date()
-                }
-            }
-            //TODO
-            //this.add_errors(json);
-            this.failure = json;
-            this.eventbus.publish("tango_rest_client.rest_failure", {data: this});
-            throw json;
-
+            throw {
+                errors: [
+                    {
+                        reason: resp.toString(),
+                        description: resp.message,
+                        severity: 'ERR',
+                        origin: this.url
+                    }
+                ],
+                quality: 'FAILURE',
+                timestamp: +new Date()
+            };
         }
 
         subscriptions(id = 0){
@@ -196,9 +169,13 @@ export class TangoRestApiRequest
             if (this.result != null) return this.promise.resolve(this.result);
             if (this.failure != null) return this.promise.reject(this.failure);
             if (what) this.url += what;
-            this.type = "GET";
-            this.eventbus.publish("tango_rest_client.rest_send", {data: this});
-            return this.transport().get(this.url).then(this._success.bind(this)).fail(this._failure.bind(this));
+
+            return this.transport.call(window, this.url,Object.assign(this.options,{
+                method: "GET",
+                credentials: "include"
+            }))
+                .catch((resp) => this.onFailure(resp))
+                .then((resp) => this.onSuccess(resp));
         }
 
         /**
@@ -211,18 +188,22 @@ export class TangoRestApiRequest
             if (this.result != null) return this.promise.resolve(this.result);
             if (this.failure != null) return this.promise.reject(this.failure);
             if (what) this.url += what;//TODO if no what is provided data will be treated as what -> failure
-            this.type = "POST";
-            this.eventbus.publish("tango_rest_client.rest_send", {data: this});
+            const params = Object.assign(this.options,{
+                method: "POST",
+                credentials: "include"
+            });
             if(data)
-                return this.transport().headers({
-                    "Content-type": "application/json"
-                }).post(this.url, (typeof data == 'object') ? JSON.stringify(data) : data)
-                    .then((resp) => this.onSuccess(resp))
-                    .catch((resp) => this.onFailure(resp));
-            else
-                return this.transport().post(this.url)
-                    .then((resp) => this.onSuccess(resp))
-                    .catch((resp) => this.onFailure(resp));
+                Object.assign(params, {
+                    headers:{
+                        "Content-type": "application/json"
+                    },
+                    body: (typeof data == 'object') ? JSON.stringify(data) : data
+                    //TODO credentials
+                });
+
+            return this.transport.call(window, this.url, params)
+                .catch((resp) => this.onFailure(resp))
+                .then((resp) => this.onSuccess(resp));
         }
 
         /**
@@ -231,17 +212,20 @@ export class TangoRestApiRequest
          * @fires tango_webapp.rest_failure
          * @returns {webix.promise}
          */
-        put(what, data) {
+        put(what, data = {}) {
             if (this.result != null) return this.promise.resolve(this.result);
             if (this.failure != null) return this.promise.reject(this.failure);
             if (what) this.url += what;//TODO if no what is provided data will be treated as what -> failure
-            this.type = "PUT";
-            this.eventbus.publish("tango_rest_client.rest_send", {data: this});
-            return this.transport().headers({
-                "Content-type": "application/json"
-            }).put(this.url, (typeof data == 'object') ? JSON.stringify(data) : data)
-                .then((resp) => this.onSuccess(resp))
-                .catch((resp) => this.onFailure(resp));
+            return this.transport.call(window,this.url,Object.assign(this.options,{
+                method: "PUT",
+                headers:{
+                            "Content-type": "application/json"
+                        },
+                body: (typeof data == 'object') ? JSON.stringify(data) : data,
+                credentials: "include"
+            }))
+                .catch((resp) => this.onFailure(resp))
+                .then((resp) => this.onSuccess(resp));
         }
 
         /**
@@ -254,10 +238,11 @@ export class TangoRestApiRequest
             if (this.result != null) return this.promise.resolve(this.result);
             if (this.failure != null) return this.promise.reject(this.failure);
             if (what) this.url += what;
-            this.type = "DELETE";
-            this.eventbus.publish("tango_rest_client.rest_send", {data: this});
-            return this.transport().del(this.url)
-                .then((resp) => this.onSuccess(resp))
-                .catch((resp) => this.onFailure(resp));
+            return this.transport.call(window,this.url, Object.assign(this.options,{
+                method: "DELETE",
+                credentials: "include"
+            }))
+                .catch((resp) => this.onFailure(resp))
+                .then((resp) => this.onSuccess(resp));
         }
     }

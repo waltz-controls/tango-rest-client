@@ -5,14 +5,11 @@
   "main": "dist/index.js",
   "source": "index.js",
   "module": "dist/index.js",
-  "jest": {
-    "preset": "jest-puppeteer"
-  },
   "scripts": {
     "build": "microbundle -f es",
     "dev": "microbundle watch -f es",
     "deploy": "curl -T $npm_package_main -H \"Authorization:Basic ${BINTRAY_AUTH_TOKEN}\" https://api.bintray.com/content/waltz-controls/libs/$npm_package_name/$npm_package_version/$npm_package_name/$npm_package_version/index.js",
-    "test": "jest-puppeteer ./test/*.js --args no-sandbox"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -32,12 +29,10 @@
   },
   "homepage": "https://github.com/waltz-controls/tango-rest-client#readme",
   "devDependencies": {
-    "@babel/plugin-transform-modules-commonjs": "^7.7.4",
+    "chai": "^4.2.0",
     "eventbus": "^1.0.0",
     "jest": "^24.9.0",
-    "jest-puppeteer": "^4.3.0",
     "microbundle": "^0.11.0",
-    "puppeteer": "^2.0.0",
-    "webix": "^7.0.0"
+    "mocha": "^6.2.2"
   }
 }
