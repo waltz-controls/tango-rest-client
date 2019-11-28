@@ -65,7 +65,7 @@ describe('TangoRestApiRequest', function() {
                 });
         });
 
-        it('should get Tango device without error', function(done) {
+        it('should get sys/tg_test/1/double_scalar without error', function(done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}/hosts/localhost/devices/sys/tg_test/1/attributes/double_scalar/value`, {
                 mode: 'cors'
             });
