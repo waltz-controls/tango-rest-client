@@ -123,9 +123,10 @@ export class TangoRestApiRequest
         /**
          * @returns {TangoRestApiRequest}
          */
-        hosts(host) {
+        hosts(host, port = 10000) {
             this.url += '/hosts/';
             this.url += host;
+            if (port !== 10000) this.url += `;port=${port}`;
             return this;
         }
 

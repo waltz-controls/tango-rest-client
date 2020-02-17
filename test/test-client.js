@@ -74,12 +74,48 @@ describe('TangoRestApiRequest', function() {
                 .attributes('double_scalar')
                 .value()
                 .get()
-                .then((resp)=> {
+                .then((resp) => {
                     console.log(resp);
                     done();
                 })
                 .catch(err => {
                     console.error(err);
+                });
+        });
+
+        it('should get sys/tg_test/1/double_scalar without error', function (done) {
+            const req = new TangoRestApiRequest(`${tango_rest_api_url}`, {
+                mode: 'cors'
+            });
+            req.hosts('localhost', 10000)
+                .devices('sys/tg_test/1')
+                .attributes('double_scalar')
+                .value()
+                .get()
+                .then((resp) => {
+                    console.log(resp);
+                    done();
+                })
+                .catch(err => {
+                    console.error(err);
+                });
+        });
+
+        it('should fail - unknown tango port', function (done) {
+            const req = new TangoRestApiRequest(`${tango_rest_api_url}`, {
+                mode: 'cors'
+            });
+            req.hosts('localhost', 12345)
+                .devices('sys/tg_test/1')
+                .attributes('double_scalar')
+                .value()
+                .get()
+                .then((resp) => {
+                    console.log(resp);
+                })
+                .catch(err => {
+                    console.error(err);
+                    done();
                 });
         });
     });
