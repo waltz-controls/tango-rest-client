@@ -4,6 +4,34 @@
  * @since 27.11.2019
  */
 /**
+ * @class [TangoRestApi]
+ */
+export class TangoRestApi {
+    constructor(url){
+        this.url = url;
+    }
+
+    ping(){
+        return this.toTangoRestApiRequest().get();
+    }
+
+    /**
+     *
+     * @return {TangoRestApiRequest}
+     */
+    toTangoRestApiRequest(){
+        return new TangoRestApiRequest(this.url)
+            .version("v10")
+    }
+}
+
+let eventbus = {
+    publish(channel, event, msg){
+        console.log(`${channel.event}`, msg);
+    }
+};
+
+/**
  * Tango REST API client
  *
  * @class [TangoRestApiRequest]
@@ -13,10 +41,13 @@
  * @property {object} result
  * @property {object} failure
  */
-//TODO extend Request
 export class TangoRestApiRequest
     /** @lends  TangoRestApiRequest */
     {
+        static registerEventBus(v){
+            eventbus = v;
+        }
+
         constructor(url, options = {}, transport = fetch){
             this.url = url;
             this.response = null;
@@ -76,6 +107,11 @@ export class TangoRestApiRequest
                 quality: 'FAILURE',
                 timestamp: +new Date()
             };
+        }
+
+        version(version){
+            this.url += `/${version}`;
+            return this;
         }
 
         subscriptions(id = 0){
