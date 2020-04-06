@@ -1,15 +1,15 @@
 {
-  "name": "tango-rest-client",
+  "name": "@waltz-controls/tango-rest-client",
   "version": "1.0.0",
   "description": "JS client for Tango REST API",
   "main": "dist/index.js",
   "source": "src/index.js",
-  "module": "dist/index.js",
+  "module": "dist/module/index.js",
   "watch": {
     "build": "{src,test}/*.js"
   },
   "scripts": {
-    "build": "mkdir -p dist && cp src/index.js dist/index.js",
+    "build": "microbundle -f es",
     "dev": "microbundle watch -f es",
     "deploy": "curl -T $npm_package_main -H \"Authorization:Basic ${BINTRAY_AUTH_TOKEN}\" https://api.bintray.com/content/waltz-controls/libs/$npm_package_name/$npm_package_version/$npm_package_name/$npm_package_version/index.js",
     "clean": "rm -rf dist",
@@ -17,10 +17,7 @@
     "watch": "npm-watch",
     "test": "mocha"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/waltz-controls/tango-rest-client.git"
-  },
+  "repository": "git://github.com/waltz-controls/tango-rest-client.git",
   "keywords": [
     "tango-controls",
     "tango-rest",
@@ -37,6 +34,7 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "maven-deploy": "^1.5.0",
+    "microbundle": "^0.11.0",
     "mocha": "^6.2.2",
     "npm-watch": "^0.6.0"
   }
