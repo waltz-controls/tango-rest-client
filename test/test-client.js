@@ -3,7 +3,7 @@
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 27.11.2019
  */
-import {TangoAttribute, TangoDevice, TangoHost, TangoRestApiRequest, TangoRestApiV10} from "../src/index.js";
+import {TangoAttribute, TangoDevice, TangoHost, TangoRestApiRequest, TangoRestApiV10} from "../dist/index.esm.js";
 
 const tango_rest_api_url = "http://localhost:10001/tango/rest/v10";
 
@@ -11,8 +11,11 @@ describe('TangoRestApiRequest', function() {
     describe('#get()', function() {
         it('should get without error', function(done) {
             const req = new TangoRestApiRequest(tango_rest_api_url, {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
             req.get()
                 .then((resp)=> {
                     console.log(resp);
@@ -25,8 +28,11 @@ describe('TangoRestApiRequest', function() {
 
         it('should receive an error', function(done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}/hosts`, {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
             req.get()
                 .then((resp)=> {
                     console.log(resp);
@@ -39,8 +45,11 @@ describe('TangoRestApiRequest', function() {
 
         it('should get Tango host without error', function(done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}/hosts/localhost`, {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
             req.get()
                 .then((resp)=> {
                     console.log(resp);
@@ -53,8 +62,11 @@ describe('TangoRestApiRequest', function() {
 
         it('should get Tango device without error', function(done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}/hosts/localhost/devices/sys/tg_test/1`, {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
             req.get()
                 .then((resp)=> {
                     console.log(resp);
@@ -67,8 +79,11 @@ describe('TangoRestApiRequest', function() {
 
         it('should get sys/tg_test/1/double_scalar without error', function(done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}`, {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
             req.hosts('localhost')
                 .devices('sys/tg_test/1')
                 .attributes('double_scalar')
@@ -85,8 +100,11 @@ describe('TangoRestApiRequest', function() {
 
         it('should get sys/tg_test/1/double_scalar without error', function (done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}`, {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
             req.hosts('localhost', 10000)
                 .devices('sys/tg_test/1')
                 .attributes('double_scalar')
@@ -103,8 +121,11 @@ describe('TangoRestApiRequest', function() {
 
         it('should fail - unknown tango port', function (done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}`, {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            },fetch);
             req.hosts('localhost', 12345)
                 .devices('sys/tg_test/1')
                 .attributes('double_scalar')
@@ -121,8 +142,11 @@ describe('TangoRestApiRequest', function() {
 
         it('should get localhost:10000 without error', function (done) {
             const req = new TangoRestApiV10('http://localhost:10001', {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
 
             TangoHost.get(req, 'localhost', 10000)
                 .then((resp) => {
@@ -137,10 +161,13 @@ describe('TangoRestApiRequest', function() {
 
         it('should get localhost:10000/sys/tg_test/1 without error', function (done) {
             const req = new TangoRestApiV10('http://localhost:10001', {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
 
-            TangoDevice.get(req, 'hzgxenvtest', 10000, 'sys/tg_test/1')
+            TangoDevice.get(req, 'localhost', 10000, 'sys/tg_test/1')
                 .then((resp) => {
                     console.log(resp);
                     done();
@@ -153,11 +180,14 @@ describe('TangoRestApiRequest', function() {
 
         it('should get devices without error', function (done) {
             const req = new TangoRestApiV10('http://localhost:10001', {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
 
             req.toTangoRestApiRequest()
-                .hosts('hzgxenvtest')
+                .hosts('localhost')
                 .devices()
                 .get("?wildcard=development/*/*&wildcard=test/*/*")
                 .then((resp) => {
@@ -172,8 +202,11 @@ describe('TangoRestApiRequest', function() {
 
         it('should get sys/tg_test/1/double_scalar without error', function (done) {
             const req = new TangoRestApiV10('http://localhost:10001', {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
 
             TangoAttribute.get(req, 'localhost', 10000, 'sys/tg_test/1', 'double_scalar')
                 .then((resp) => {
@@ -188,8 +221,11 @@ describe('TangoRestApiRequest', function() {
 
         it('should get sys/tg_test/1/double_scalar/value without error', function (done) {
             const req = new TangoRestApiV10('http://localhost:10001', {
-                mode: 'cors'
-            });
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
 
             TangoAttribute.get(req, 'localhost', 10000, 'sys/tg_test/1', 'double_scalar')
                 .then(attr => attr.read(req))
@@ -202,5 +238,28 @@ describe('TangoRestApiRequest', function() {
 
                 });
         });
+    });
+
+    describe('#put()', function () {
+        it("put 42 into localhost:10000/sys/tg_test/1/double_scalar_w", function (done) {
+            const req = new TangoRestApiRequest(tango_rest_api_url, {
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
+                })
+            }, fetch);
+            req.hosts('localhost')
+                .devices('sys/tg_test/1')
+                .attributes('double_scalar_w')
+                .value()
+                .put('?v=42')
+                .then((resp) => {
+                    console.log(resp);
+                    done();
+                })
+                .catch(err => {
+                    console.error(err);
+                });
+        })
     });
 });
