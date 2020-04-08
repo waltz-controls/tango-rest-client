@@ -7,7 +7,7 @@ export default [
     // browser-friendly UMD build
     {
         input: 'src/*.js',
-        external: ['eventbus', 'rxjs'],
+        external: ['@waltz-controls/eventbus', 'rxjs'],
         output: {
             file: pkg.module,
             format: 'es',
@@ -17,6 +17,18 @@ export default [
             resolve(), // so Rollup can find `ms`
             commonjs(), // so Rollup can convert `ms` to an ES module
             multi()
+        ]
+    },
+    {
+        input: 'test/run.js',
+        output: {
+            file: 'test/test.js',
+            format: 'es',
+            sourcemap: 'inline'
+        },
+        plugins: [
+            resolve(), // so Rollup can find `ms`
+            commonjs() // so Rollup can convert `ms` to an ES module
         ]
     }
 ];

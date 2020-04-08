@@ -18,8 +18,8 @@ function findEventByTarget(target) {
  * @since 3/28/19
  */
 export class Subscription {
-    constructor(url){
-        this.url = url;
+    constructor(host = ''){
+        this.url = `${host}/tango`;
         this.source = null;
         this.id = 0;
         this.events = [];
@@ -28,9 +28,10 @@ export class Subscription {
     }
 
     reconnect(){
-        this.connect()
+        return this.connect()
             .then(()=> {
                 this.source.open();
+                return this;
             })
             .catch((err) => {
                 console.error(`Failed to connect to ${this.url} due to ${err}! Retry in ${kEventSourceOpenTimeout}`);
@@ -50,6 +51,7 @@ export class Subscription {
         this.events = events;
         this.failures = failures;
         this.source = new EventStream(`${this.url}/subscriptions/${id}/event-stream`, this);
+        return this;
     }
 
     async open(){
@@ -57,7 +59,8 @@ export class Subscription {
             this.listeners.get(event.id).forEach(listener =>
                 this.addEventListener(event, listener)
             )
-        })
+        });
+        return this;
     }
 
     /**
@@ -81,7 +84,7 @@ export class Subscription {
      * @param {Target} target
      * @param {Function({timestamp, data}): void} success
      * @param {Function({timestamp, data}): void} failure
-     * @return {Promise<void>}
+     * @return {Promise<Subscription>}
      */
     async subscribe(target, success, failure){
         let event = this.events.find(findEventByTarget(target));
@@ -108,6 +111,7 @@ export class Subscription {
         //TODO return listener -> client preserves listener; client listens for open event and re-adds listeners
         this.listeners.put(event.id, listener);
         this.addEventListener(event, listener);
+        return this;
     }
 
     unsubscribe(target){
@@ -125,7 +129,7 @@ export class Subscription {
         //TODO delete event from subscriptions
     }
 
-    async addEventListener(event, listener){
+    addEventListener(event, listener){
         this.source.addEventListener(event.id, listener);
     }
 }

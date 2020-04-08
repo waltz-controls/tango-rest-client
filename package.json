@@ -1,6 +1,6 @@
 {
   "name": "@waltz-controls/tango-rest-client",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "JS client for Tango REST API",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -36,6 +36,7 @@
     "rollup": "^1.29.0"
   },
   "dependencies": {
+    "@waltz-controls/eventbus": "^1.2.1",
     "rxjs": "^6.5.5"
   }
 }

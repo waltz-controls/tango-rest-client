@@ -4,6 +4,9 @@
  * @since 27.11.2019
  */
 import {TangoAttribute, TangoDevice, TangoHost, TangoRestApiRequest, TangoRestApi} from "../dist/index.esm.js";
+import {EventBus} from "@waltz-controls/eventbus";
+import {RxTangoAttribute, Subscription} from "../dist/index.esm";
+import {take, tap, finalize} from 'rxjs/operators';
 
 const tango_rest_api_url = "http://localhost:10001/tango/rest/v10";
 
@@ -266,4 +269,70 @@ describe('TangoRestApiRequest', function() {
                 });
         })
     });
+
+    describe('#rxtango',function(){
+        it('test RxTangoAttribute',function(done){
+            const rest = new TangoRestApi('http://localhost:10001',{
+                mode:'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
+                })
+            });
+
+
+            const attribute = rest.newTangoAttribute({host:'localhost',port:10000,device:'sys/tg_test/1',name:'double_scalar'});
+
+            const eventbus = new EventBus();
+
+            const subscription = new Subscription('http://localhost:10001');
+
+            const rxTangoAttribute = new RxTangoAttribute({attribute,eventbus,subscription});
+
+
+
+            rxTangoAttribute.observe()
+                .pipe(take(5), finalize(() => done()))
+                .subscribe(event => console.log(event));
+
+            rxTangoAttribute.read();
+            rxTangoAttribute.read();
+            rxTangoAttribute.read();
+            rxTangoAttribute.read();
+            rxTangoAttribute.read();
+            rxTangoAttribute.read();
+            rxTangoAttribute.read();
+
+        });
+
+        it('test RxTangoAttribute write/event',function(done){
+            const rest = new TangoRestApi('http://localhost:10001',{
+                mode:'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
+                })
+            });
+
+
+            const attribute = rest.newTangoAttribute({host:'localhost',port:10000,device:'sys/tg_test/1',name:'double_scalar_w'});
+
+            const eventbus = new EventBus();
+
+            const subscription = new Subscription('http://localhost:10001');
+
+            const rxTangoAttribute = new RxTangoAttribute({attribute,eventbus,subscription});
+
+            subscription.connect()
+                .then(subscription => subscription.open())
+                .then(() => rxTangoAttribute.subscribe('change'));
+
+
+            rxTangoAttribute.observe()
+                .pipe(take(2), finalize(() => done()))
+                .subscribe(event => console.log(event));
+
+            attribute.write(200);
+            attribute.write(300);
+
+        })
+    })
 });
