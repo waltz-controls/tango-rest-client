@@ -36,6 +36,7 @@
     "rollup": "^1.29.0"
   },
   "dependencies": {
-    "mocha": "^7.1.1"
+    "mocha": "^7.1.1",
+    "rxjs": "^6.5.5"
   }
 }

@@ -3,170 +3,32 @@
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 27.11.2019
  */
+import {TangoAttribute, TangoHost, TangoDevice} from "./tango";
 
-
-export class TangoDevice {
-    constructor(id, tango_host, name, alias, info) {
-        this.id = id;
-        let host, port;
-        [host, port] = tango_host.split(':');
-        this.host = host;
-        this.port = parseInt(port);
-        this.name = name;
-        this.alias = alias;
-        this.info = info;
-
-    }
-
-    static get(rest, host, port, name) {
-        return rest
-            .toTangoRestApiRequest()
-            .hosts(host, port)
-            .devices(name)
-            .get()
-            .then(resp => new TangoDevice(resp.id, resp.host, resp.name, resp.alias, resp.info));
-    }
-
-    /**
-     *
-     * @param rest
-     * @returns {Promise<TangoHost>}
-     */
-    getTangoHost(rest) {
-        return TangoHost.get(rest, this.host, this.port)
-    }
-
-    /**
-     *
-     * @param rest
-     * @param name
-     * @returns {Promise<TangoAttribute>}
-     */
-    getTangoAttribute(rest, name) {
-        return TangoAttribute.get(rest, this.host, this.port, this.name, name);
-    }
-
-    getTangoCommand() {
-
-    }
-
-    getTangoPipe() {
-
-    }
-
-    getTangoDeviceProperty() {
-
-    }
-
-    /**
-     *
-     * @param {TangoRestApiV10} rest
-     */
-    toTangoRestApiRequest(rest) {
-        return this.host.toTangoRestApiRequest(rest).devices(this.name);
-    }
-}
-
-export class TangoAttribute {
-    constructor(id, tango_host, device, name, info) {
-        this.id = id;
-        let host, port;
-        [host, port] = tango_host.split(':');
-        this.host = host;
-        this.port = port;
-        this.device = device;
-        this.name = name;
-        this.info = info;
-    }
-
-    /**
-     *
-     * @param rest
-     * @param host
-     * @param port
-     * @param device
-     * @param name
-     * @returns {Promise<TangoAttribute>}
-     */
-    static get(rest, host, port, device, name) {
-        return rest.toTangoRestApiRequest()
-            .hosts(host, port)
-            .devices(device)
-            .attributes(name)
-            .get()
-            .then(resp => new TangoAttribute(resp.id, resp.host, resp.device, resp.name, resp.info))
-    }
-
-    /**
-     *
-     * @param rest
-     * @returns {*}
-     */
-    read(rest) {
-        return this.toTangoRestApiRequest(rest)
-            .value()
-            .get()
-    }
-
-    toTangoRestApiRequest(rest) {
-        return rest.toTangoRestApiRequest()
-            .hosts(this.host)
-            .devices(this.device)
-            .attributes(this.name)
-    }
-}
-
-export class TangoHost {
-    constructor(id, host, port, name, info) {
-        this.id = id;
-        this.host = host;
-        this.port = port;
-        this.name = name;
-        this.info = info
-    }
-
-    static get(rest, host, port) {
-        return rest
-            .toTangoRestApiRequest()
-            .hosts(host, port)
-            .get()
-            .then(resp => new TangoHost(resp.id, resp.host, parseInt(resp.port), resp.name, resp.info))
-    }
-
-    /**
-     *
-     * @param {TangoRestApiV10} rest
-     * @param {string} wildcard
-     * @returns {Promise<[{name, href}]>}
-     *
-     */
-    devices(rest, wildcard) {
-        return this.toTangoRestApiRequest(rest)
-            .devices()
-            .get(`?${wildcard}`)
-    }
-
-    /**
-     *
-     * @param {TangoRestApiV10} rest
-     * @returns {TangoRestApiRequest}
-     */
-    toTangoRestApiRequest(rest) {
-        return rest.toTangoRestApiRequest().hosts(this.host, this.port);
-    }
-}
 
 /**
- * @class [TangoRestApiV10]
+ * @class [TangoRestApi]
  */
-export class TangoRestApiV10 {
-    constructor(url = '', options = {}) {
-        this.url = `${url}/tango/rest/v10`;
+export class TangoRestApi {
+    constructor(host = '', options = {}) {
+        this.url = `${host}/tango/rest/v10`;
         this.options = options;
     }
 
     ping() {
         return this.toTangoRestApiRequest().get();
+    }
+
+    newTangoHost({host, port} = {host:'localhost', port: 10000}){
+        return new TangoHost({rest: this, host, port})
+    }
+
+    newTangoAttribute({host, port, device, name} = {}){
+        return new TangoAttribute({rest: this, host, port, device, name});
+    }
+
+    newTangoDevice({host, port, device}){
+        return new TangoDevice({rest: this, host, port, device});
     }
 
     /**
@@ -382,9 +244,9 @@ export class TangoRestApiRequest
         });
         if(data)
             Object.assign(params, {
-                headers:{
+                headers:Object.assign(params,{
                     "Content-type": "application/json"
-                },
+                }),
                 body: (typeof data == 'object') ? JSON.stringify(data) : data
                 //TODO credentials
             });
