@@ -204,22 +204,9 @@ export class TangoRestApiRequest
      * Fires event to OpenAjax
      * @fires tango_webapp.rest_success
      * @fires tango_webapp.rest_failure
-     * @returns {webix.promise}
-     */
-    exec(argin) {
-        return this.put("", argin);
-    }
-
-
-    /**
-     * Fires event to OpenAjax
-     * @fires tango_webapp.rest_success
-     * @fires tango_webapp.rest_failure
      * @returns {promise}
      */
     get(what) {
-        if (this.result != null) return this.promise.resolve(this.result);
-        if (this.failure != null) return this.promise.reject(this.failure);
         if (what) this.url += what;
 
         return this.transport.call(null, this.url,Object.assign(this.options,{
@@ -236,8 +223,6 @@ export class TangoRestApiRequest
      * @returns {webix.promise}
      */
     post(what, data) {
-        if (this.result != null) return this.promise.resolve(this.result);
-        if (this.failure != null) return this.promise.reject(this.failure);
         if (what) this.url += what;//TODO if no what is provided data will be treated as what -> failure
         const params = Object.assign(this.options,{
             method: "POST"
@@ -248,7 +233,6 @@ export class TangoRestApiRequest
                     "Content-type": "application/json"
                 }),
                 body: (typeof data == 'object') ? JSON.stringify(data) : data
-                //TODO credentials
             });
 
         return this.transport.call(null, this.url, params)
@@ -263,8 +247,6 @@ export class TangoRestApiRequest
      * @returns {Promise}
      */
     put(what, data = {}) {
-        if (this.result != null) return this.promise.resolve(this.result);
-        if (this.failure != null) return this.promise.reject(this.failure);
         if (what) this.url += what;//TODO if no what is provided data will be treated as what -> failure
         return this.transport.call(null,this.url,Object.assign(this.options,{
             method: "PUT",
@@ -284,8 +266,6 @@ export class TangoRestApiRequest
      * @returns {webix.promise}
      */
     "delete"(what) {
-        if (this.result != null) return this.promise.resolve(this.result);
-        if (this.failure != null) return this.promise.reject(this.failure);
         if (what) this.url += what;
         return this.transport.call(null,this.url, Object.assign(this.options,{
             method: "DELETE"
