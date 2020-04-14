@@ -3,10 +3,10 @@
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 27.11.2019
  */
-import {TangoAttribute, TangoDevice, TangoHost, TangoRestApiRequest, TangoRestApi} from "../dist/index.esm.js";
+import {TangoAttribute, TangoDevice, TangoHost, TangoRestApiRequest, TangoRestApi} from "../src/rest";
 import {EventBus} from "@waltz-controls/eventbus";
-import {RxTangoAttribute, Subscription} from "../dist/index.esm";
 import {take, tap, finalize} from 'rxjs/operators';
+import {Subscription, EventStream} from "../src/subscriptions";
 
 const tango_rest_api_url = "http://localhost:10001/tango/rest/v10";
 
@@ -270,7 +270,7 @@ describe('TangoRestApiRequest', function() {
         })
     });
 
-    describe('#rxtango',function(){
+    describe('#subscriptions',function(){
         it('test RxTangoAttribute',function(done){
             const rest = new TangoRestApi('http://localhost:10001',{
                 mode:'cors',
@@ -280,59 +280,16 @@ describe('TangoRestApiRequest', function() {
             });
 
 
-            const attribute = rest.newTangoAttribute({host:'localhost',port:10000,device:'sys/tg_test/1',name:'double_scalar'});
+            Subscription.connect('http://localhost:10001')
+                .then(subscription => {
+                    subscription.asObservable().subscribe(msg => console.log(msg))
 
-            const eventbus = new EventBus();
-
-            const subscription = new Subscription('http://localhost:10001');
-
-            const rxTangoAttribute = new RxTangoAttribute({attribute,eventbus,subscription});
-
+                    subscription.subscribe({host:'localhost:10000',device:'sys/tg_test/1',attribute:'double_scalar_w',type:'change'})
+                })
 
 
-            rxTangoAttribute.observe()
-                .pipe(take(5), finalize(() => done()))
-                .subscribe(event => console.log(event));
 
-            rxTangoAttribute.read();
-            rxTangoAttribute.read();
-            rxTangoAttribute.read();
-            rxTangoAttribute.read();
-            rxTangoAttribute.read();
-            rxTangoAttribute.read();
-            rxTangoAttribute.read();
 
         });
-
-        it('test RxTangoAttribute write/event',function(done){
-            const rest = new TangoRestApi('http://localhost:10001',{
-                mode:'cors',
-                headers: new Headers({
-                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
-                })
-            });
-
-
-            const attribute = rest.newTangoAttribute({host:'localhost',port:10000,device:'sys/tg_test/1',name:'double_scalar_w'});
-
-            const eventbus = new EventBus();
-
-            const subscription = new Subscription('http://localhost:10001');
-
-            const rxTangoAttribute = new RxTangoAttribute({attribute,eventbus,subscription});
-
-            subscription.connect()
-                .then(subscription => subscription.open())
-                .then(() => rxTangoAttribute.subscribe('change'));
-
-
-            rxTangoAttribute.observe()
-                .pipe(take(2), finalize(() => done()))
-                .subscribe(event => console.log(event));
-
-            attribute.write(200);
-            attribute.write(300);
-
-        })
     })
 });
