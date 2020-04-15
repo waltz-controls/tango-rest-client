@@ -1,8 +1,6 @@
 import {TangoRestApiRequest} from "./rest";
-import MultiMap from "./multimap";
-import {fromEvent, Observable, Subject, throwError, using} from "rxjs";
-import {fromPromise} from "rxjs/internal-compatibility";
-import {concatMap, delay, retryWhen, take, tap} from "rxjs/operators";
+import {from, fromEvent, Observable, of, Subject, throwError, using} from "rxjs";
+import {delay, find, map, mergeMap, retryWhen, share, switchMap, tap} from "rxjs/operators";
 
 const kEventSourceOpenTimeout = 3000;
 const kOpenFailureThreshold = 5;
@@ -16,165 +14,151 @@ function findEventByTarget(target) {
 }
 
 /**
+ * Creates shared Observable that is served as a connection to Subscriptions host
+ *
+ * @param {string} host
+ * @param {{}} options
+ */
+function createConnection(host, options){
+    return of(host).pipe(
+        tap(host => console.debug(`Opening EventStream on ${host}`)),
+        switchMap(host =>
+            from(new TangoRestApiRequest(`${host}/tango/subscriptions`, {...options,mode:'cors'}, fetch)
+                .post("", this.subscription.events.map(event => event.target)))),
+        map(resp => this.subscription = new Subscription({...resp,url: `${host}/tango/subscriptions/${resp.id}`, source: new EventStream(`${host}/tango/subscriptions/${resp.id}/event-stream`)})),
+        switchMap(subscription => subscription.source.open()),
+        retryWhen(err => err.pipe(
+            tap(err=> console.error("EventStream error!",err)),
+            delay(kEventSourceOpenTimeout)
+        )),
+        tap(() => console.debug('EventStream is open')),
+        tap(() => this.subscription.events.forEach(event => this.subscription.source.stream(event.id).subscribe(this.subject))),
+        share()
+    )
+}
+
+/**
+ *
+ * Entry point to TangoRestSubscriptions
+ *
+ * @class [Subscriptions]
+ */
+export class Subscriptions {
+    constructor(host = '',options = {}) {
+        this.options = options;
+        this.subscription = new Subscription({events:[]});
+        this.subject = new Subject();
+        this.connection = createConnection.call(this, host, options);
+    }
+
+    /**
+     *
+     * @return {Observable<EventStream>}
+     */
+    connect(){
+        return this.connection;
+    }
+
+    /**
+     *
+     * Start listening for a Tango event host/device/attribute/type
+     *
+     * @param host
+     * @param device
+     * @param attribute
+     * @param type
+     */
+    listen({host, device, attribute, type}){
+        const target = new Target(host, device, attribute, type);
+
+        of(target).pipe(
+            switchMap(() => this.subscription.source ? of(): this.connect()),
+            map(() => this.subscription.events.find(findEventByTarget(target))),
+            switchMap(event => event? of() : this.subscription.putTarget(target, this.options)),
+            tap(event => this.subscription.events.push(event)),
+            tap(event => console.debug('New subscription to:', event))
+        ).subscribe({
+                    next: event => {
+                        this.subscription.source.stream(event.id)
+                            .subscribe(this.subject)
+                    },
+                    error: err => {
+                        console.error(err)
+                        this.listen({host, device, attribute, type})
+                    }
+                });
+    }
+
+    /**
+     *
+     * @return {Observable<>}
+     */
+    asObservable(){
+        return this.subject.pipe(
+            map(msg => {
+                const result = {
+                    ...this.subscription.events.find(event => event.id == msg.type).target,
+                    timestamp: parseInt(msg.lastEventId),
+                }
+                if(msg.data.startsWith("error")){
+                    return {
+                        ...result,
+                        error: msg.data.substring(7)
+                    };
+                } else {
+                    return {
+                        ...result,
+                        data: JSON.parse(msg.data)
+                    };
+                }
+            })
+        );
+    }
+}
+
+/**
  *
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 3/28/19
  */
-export class Subscription {
+class Subscription {
     constructor({url, id, events, failures, source}){
         this.url = url;
         this.source = source;
         this.id = id;
         this.events = events;
         this.failures = failures;
-        this.listeners = new MultiMap();
-        this.subject = new Subject();
-    }
-
-    reconnect(){
-        return this.connect()
-            .then(()=> {
-                this.source.open();
-                return this;
-            })
-            .catch((err) => {
-                console.error(`Failed to connect to ${this.url} due to ${err}! Retry in ${kEventSourceOpenTimeout}`);
-                setTimeout(() => {
-                    this.reconnect();
-                },kEventSourceOpenTimeout);
-            });
-    }
-
-    /**
-     *
-     * @param {string} [url = '/tango/subscriptions'] url
-     * @param {object} [options = {}] options
-     * @param {Event[]} [events = []] events
-     * @returns {Promise<Subscription>}
-     */
-    static connect(host = '', options = {}, events = []){
-        return new TangoRestApiRequest(`${host}/tango`, {...options,...{mode:'cors'}}, fetch)
-            .subscriptions()
-            .post("", events.map(event => event.target))
-            .then(resp => new Subscription({...{url:`${host}/tango/subscriptions/${resp.id}`, events, source: new EventStream(`${host}/tango/subscriptions/${resp.id}/event-stream`)}, ...resp}))
-            .then(subscription => {
-                subscription.source.open()
-                    .pipe(
-                        retryWhen(errors => errors.pipe(tap(errors => console.error('EventStream error!',errors)), delay(3000), take(10), concatMap(throwError)))
-                    ).subscribe({
-                        next: () => {
-                            console.debug('EventStream open!');
-                        }
-                    });
-
-                return subscription;
-            })
-            .catch(console.error)
-
-        // ;
-        // this.source = using(() => new EventStream(`${url}/subscriptions/${id}/event-stream`),
-        //         eventStream => new Observable(subscriber => {
-        //             eventStream._stream.onopen = () => subscriber.next();
-        //             eventStream._stream.onmessage = message => subscriber.next(message);
-        //             eventStream._stream.onerror = err => subscriber.error(err);
-        //         }));
-        // return this;
-    }
-
-    async open(){
-        this.events.forEach(event => {
-            this.listeners.get(event.id).forEach(listener =>
-                this.addEventListener(event, listener)
-            )
-        });
-        return this;
     }
 
     /**
      *
      * @param {Target} target
-     * @return {Promise<Event>}
+     * @param {{}} [options={}] options
+     * @return {Observable<Event>}
      */
-    async putTarget(target) {
-        const response = await new TangoRestApiRequest(this.url, {mode:'cors', headers:{}}, fetch).put("", [target]);
-        const events = response.map(event => new Event(event.id, event.target));
-        const event = events.find(findEventByTarget(target));
-        if (event === undefined) {
-            console.error("Failed to subscribe");
-            throw "Failed to subscribe";
-        }
-        return event;
-    }
-
-    /**
-     *
-     * @param {Target} target
-     * @param {Function({timestamp, data}): void} success
-     * @param {Function({timestamp, data}): void} failure
-     * @return {Promise<Subscription>}
-     */
-    async subscribe({host, device, attribute, type}, success, failure){
-        const target = new Target(host, device, attribute, type);
-        let event = this.events.find(findEventByTarget(target));
-
-        if(event === undefined){
-            event = await this.putTarget(target);
-            this.events.push(event);
-        }
-
-        this.source.stream(event.id)
-            .subscribe(this.subject);
-
-        // const listener = function(event){
-        //     if(event.data.startsWith("error")){
-        //         failure({
-        //             timestamp: parseInt(event.lastEventId),
-        //             data: event.data
-        //         });
-        //     } else {
-        //         success({
-        //             timestamp: parseInt(event.lastEventId),
-        //             data: JSON.parse(event.data)
-        //         })
-        //     }
-        // };
-        //
-        // //TODO return listener -> client preserves listener; client listens for open event and re-adds listeners
-        // this.listeners.put(event.id, listener);
-        // this.addEventListener(event, listener);
-        return this;
-    }
-
-    unsubscribe(target){
-        let event = this.events.find(findEventByTarget(target));
-
-        if(event === undefined){
-            return;
-        }
-
-        const listeners = this.listeners.get(event.id);
-        listeners.forEach(listener =>
-            this.source.stream.removeEventListener(event.id, listener)
-        );
-
-        //TODO delete event from subscriptions
-    }
-
-    addEventListener(event, listener){
-        this.source.addEventListener(event.id, listener);
-    }
-
-    asObservable(){
-        return this.subject;
+    putTarget(target, options = {}) {
+        return of(this.url).pipe(
+            switchMap( url => from(new TangoRestApiRequest(url, {...options,mode:'cors'}, fetch).put("", [target]))),
+            mergeMap(response => from(response.map(event => new Event(event)))),
+            find(findEventByTarget(target)),
+            switchMap(event => event ? of(event) : throwError("Failed to subscribe"))
+        )
     }
 }
 
-export class EventStream {
+/**
+ *
+ */
+class EventStream {
     constructor(url){
         this.url = url;
         this._stream = null;
     }
 
+    /**
+     *
+     * @return {Observable<EventStream>}
+     */
     open(){
         return using(() => {
                 this._stream = new EventSource(this.url,{
@@ -186,24 +170,22 @@ export class EventStream {
                 eventStream._stream.onopen = () => subscriber.next();
                 eventStream._stream.onerror = err => subscriber.error(err);
             }))
-
-        // this.stream.onopen = function(){
-        //     console.log("EventStream open!");
-        //     this.subscription.open();
-        // }.bind(this);
-        //
-        // this.stream.onerror = function(error){
-        //     console.error(error);
-        //     this.stream.close();
-        //     this.subscription.reconnect();
-        // }.bind(this);
     }
 
+    /**
+     *
+     * @param {string} id - Event's id
+     * @return {Observable<*>}
+     */
     stream(id = 'onmessage'){
         return fromEvent(this._stream, id);
     }
 
 
+    /**
+     * Effectively closes underlying EventSource
+     *
+     */
     unsubscribe() {
         this._stream.close();
     }
@@ -211,7 +193,7 @@ export class EventStream {
 
 
 
-export class Target {
+class Target {
     constructor(host, device, attribute, type) {
         this.host = host;
         this.device = device;
@@ -221,8 +203,8 @@ export class Target {
 
 }
 
-export class Event{
-    constructor(id, target){
+class Event{
+    constructor({id, target}){
         this.id = id;
         this.target = target;
     }

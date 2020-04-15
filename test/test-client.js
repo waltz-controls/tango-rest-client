@@ -3,10 +3,9 @@
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 27.11.2019
  */
-import {TangoAttribute, TangoDevice, TangoHost, TangoRestApiRequest, TangoRestApi} from "../src/rest";
-import {EventBus} from "@waltz-controls/eventbus";
-import {take, tap, finalize} from 'rxjs/operators';
-import {Subscription, EventStream} from "../src/subscriptions";
+import {TangoAttribute, TangoDevice, TangoHost, TangoRestApi, TangoRestApiRequest} from "../src/rest";
+import {take, tap} from 'rxjs/operators';
+import {EventStream, Subscription, Subscriptions} from "../src/subscriptions";
 
 const tango_rest_api_url = "http://localhost:10001/tango/rest/v10";
 
@@ -274,22 +273,38 @@ describe('TangoRestApiRequest', function() {
         it('test RxTangoAttribute',function(done){
             const rest = new TangoRestApi('http://localhost:10001',{
                 mode:'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic ' + btoa('tango-cs:tango')
-                })
+                }
             });
 
 
-            Subscription.connect('http://localhost:10001')
-                .then(subscription => {
-                    subscription.asObservable().subscribe(msg => console.log(msg))
+            const subscriptions = new Subscriptions('http://localhost:10001',{
+                mode:'cors',
+                headers: {
+                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
+                }
+            });
 
-                    subscription.subscribe({host:'localhost:10000',device:'sys/tg_test/1',attribute:'double_scalar_w',type:'change'})
-                })
+            const subcription = subscriptions.asObservable().pipe(
+                take(10),
+                tap(msg => console.log(msg))
+            ).subscribe(() => done());
+
+            subscriptions.listen({host:'localhost:10000',device:'sys/tg_test/1',attribute:'double_scalar_w',type:'change'}, )
+
+            subscriptions.listen({host:'localhost:10000',device:'sys/tg_test/1',attribute:'state',type:'change'}, )
+            subscriptions.listen({host:'localhost:10000',device:'sys/tg_test/1',attribute:'status',type:'change'}, )
 
 
+            setTimeout(() => {
+                subscriptions.listen({host:'localhost:10000',device:'sys/tg_test/1',attribute:'double_scalar_w',type:'change'}, 'http://localhost:10001')
+            }, 5000)
 
-
+            // setTimeout(() => {
+            //     subcription.unsubscribe()
+            // }, 10000)
+            // subscriptions.connect('http://localhost:10001');
         });
     })
 });

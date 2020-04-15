@@ -3,7 +3,7 @@
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 27.11.2019
  */
-import {TangoAttribute, TangoHost, TangoDevice} from "./tango";
+import {TangoAttribute, TangoDevice, TangoHost} from "./tango";
 
 
 /**
@@ -220,7 +220,7 @@ export class TangoRestApiRequest
      * Fires event to OpenAjax
      * @fires tango_webapp.rest_success
      * @fires tango_webapp.rest_failure
-     * @returns {webix.promise}
+     * @returns {Promise}
      */
     post(what, data) {
         if (what) this.url += what;//TODO if no what is provided data will be treated as what -> failure
@@ -248,13 +248,16 @@ export class TangoRestApiRequest
      */
     put(what, data = {}) {
         if (what) this.url += what;//TODO if no what is provided data will be treated as what -> failure
-        return this.transport.call(null,this.url,Object.assign(this.options,{
-            method: "PUT",
-            headers:Object.assign(this.options.headers,{
+        const options = {
+            ...this.options,
+            method: 'put',
+            headers: {
+                ...this.options.headers,
                 "Content-type": "application/json"
-            }),
+            },
             body: (typeof data == 'object') ? JSON.stringify(data) : data
-        }))
+        }
+        return this.transport.call(null,this.url,options)
             .catch((resp) => this.onFailure(resp))
             .then((resp) => this.onSuccess(resp));
     }
