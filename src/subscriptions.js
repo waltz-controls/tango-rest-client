@@ -72,7 +72,7 @@ export class Subscriptions {
         const target = new Target(host, device, attribute, type);
 
         of(target).pipe(
-            switchMap(() => this.subscription.source ? of(): this.connect()),
+            switchMap(() => this.subscription.source ? of(target): this.connect()),
             map(() => this.subscription.events.find(findEventByTarget(target))),
             switchMap(event => event? of() : this.subscription.putTarget(target, this.options)),
             tap(event => this.subscription.events.push(event)),

@@ -298,7 +298,7 @@ describe('TangoRestApiRequest', function() {
 
 
             setTimeout(() => {
-                subscriptions.listen({host:'localhost:10000',device:'sys/tg_test/1',attribute:'double_scalar_w',type:'change'}, 'http://localhost:10001')
+                subscriptions.listen({host:'localhost:10000',device:'sys/tg_test/1',attribute:'double_scalar',type:'change'}, 'http://localhost:10001')
             }, 5000)
 
             // setTimeout(() => {
