@@ -1,5 +1,5 @@
 import {TangoRestApiRequest} from "./rest";
-import {from, fromEvent, Observable, of, Subject, throwError, using} from "rxjs";
+import {from, fromEvent, Observable, of, Subject, using} from "rxjs";
 import {delay, find, map, mergeMap, retryWhen, share, switchMap, tap} from "rxjs/operators";
 
 const kEventSourceOpenTimeout = 3000;
@@ -75,8 +75,7 @@ export class Subscriptions {
             switchMap(() => this.subscription.source ? of(target): this.connect()),
             map(() => this.subscription.events.find(findEventByTarget(target))),
             switchMap(event => event? of() : this.subscription.putTarget(target, this.options)),
-            tap(event => this.subscription.events.push(event)),
-            tap(event => console.debug('New subscription to:', event))
+            tap(event => this.subscription.events.push(event))
         ).subscribe({
                     next: event => {
                         this.subscription.source.stream(event.id)
@@ -137,11 +136,15 @@ class Subscription {
      * @return {Observable<Event>}
      */
     putTarget(target, options = {}) {
+        const streamId = +new Date();
         return of(this.url).pipe(
+            tap(url => console.debug(`${streamId} put new target to: ${url}`, target)),
             switchMap( url => from(new TangoRestApiRequest(url, {...options,mode:'cors'}, fetch).put("", [target]))),
             mergeMap(response => from(response.map(event => new Event(event)))),
             find(findEventByTarget(target)),
-            switchMap(event => event ? of(event) : throwError("Failed to subscribe"))
+            tap(event => event ? console.debug(`${streamId} Success!`, event) : console.error(`${streamId} Failure. See server side logs...`)),
+            switchMap(event => event ? of(event) : of())
+
         )
     }
 }

@@ -1,4 +1,6 @@
 import {TangoRestApi} from "./rest";
+import {Observable} from "rxjs";
+import {filter} from "rxjs/operators";
 
 export class TangoDevice {
     constructor({rest, host, port, name, alias} = {}) {
@@ -14,12 +16,20 @@ export class TangoDevice {
      *
      * @returns {TangoHost}
      */
-    get tangoHost() {
+    tangoHost() {
         return new TangoHost({rest: this.rest, host:this.host, port: this.port})
     }
 
     newCommand(name){
         return new TangoCommand({rest: this.rest, host: this.host, port: this.port, device: this.name, name});
+    }
+
+    newAttribute(name){
+        return new TangoAttribute({rest: this.rest, host: this.host, port: this.port, device: this.name, name});
+    }
+
+    newPipe(name){
+        return new TangoPipe({rest: this.rest, host: this.host, port: this.port, device: this.name, name});
     }
 
     info(){
@@ -38,16 +48,27 @@ export class TangoDevice {
             .get();
     }
 
-    subscribe(){
+    /**
+     *
+     * @param subscriptions
+     * @return {Observable<*>}
+     */
+    observe(subscriptions){
+        subscriptions.listen({host:`${this.host}:${this.port}`,device: this.name, attribute: 'state', type: 'change'})
+        subscriptions.listen({host:`${this.host}:${this.port}`,device: this.name, attribute: 'status', type: 'change'})
 
+        return subscriptions.asObservable().pipe(
+            filter(msg => msg.host === `${this.host}:${this.port}` &&
+                msg.device === this.name &&
+                (msg.attribute === 'state' || msg.attribute === 'status'))
+        )
     }
 
     /**
      *
-     * @param {TangoRestApiV10} rest
      */
-    toTangoRestApiRequest(rest) {
-        return this.host.toTangoRestApiRequest(rest).devices(this.name);
+    toTangoRestApiRequest() {
+        return this.rest.toTangoRestApiRequest().devices(this.name);
     }
 }
 
@@ -60,11 +81,11 @@ export class TangoPipe {
         this.name = name;
     }
 
-    get tangoHost(){
+    tangoHost(){
         return new TangoHost({rest: this.rest, host: this.host, port: this.port});
     }
 
-    get tangoDevice(){
+    tangoDevice(){
         return new TangoDevice({rest: this.rest, host:this.host, port: this.port, name: this.device});
     }
 
@@ -88,14 +109,10 @@ export class TangoPipe {
             .pipes(this.name)
             .put('', v)
     }
-
-    subscribe(){
-        //TODO return new Subscription
-    }
 }
 
 export class TangoCommand {
-    constructor({rest, host, port, device, name} = {}) {
+    constructor({rest, host, port, device, name} = {port:10000}) {
         this.rest = rest;
         this.host = host;
         this.port = parseInt(port);
@@ -103,11 +120,11 @@ export class TangoCommand {
         this.name = name;
     }
 
-    get tangoHost(){
+    tangoHost(){
         return new TangoHost({rest: this.rest, host: this.host, port: this.port});
     }
 
-    get tangoDevice(){
+    tangoDevice(){
         return new TangoDevice({rest: this.rest, host:this.host, port: this.port, name: this.device});
     }
 
@@ -123,10 +140,6 @@ export class TangoCommand {
             .commands(this.name)
             .put('', argin)
     }
-
-    subscribe(){
-        //TODO return new Subscription
-    }
 }
 
 export class TangoAttribute {
@@ -135,10 +148,11 @@ export class TangoAttribute {
      * @constructor
      * @param {TangoRestApi} rest
      * @param host
+     * @param port
      * @param device
      * @param name
      */
-    constructor({rest, host, port, device, name} = {}) {
+    constructor({rest, host, port, device, name}) {
         this.rest = rest;
         this.host = host;
         this.port = parseInt(port);
@@ -146,11 +160,11 @@ export class TangoAttribute {
         this.name = name;
     }
 
-    get tangoHost(){
+    tangoHost(){
         return new TangoHost({rest: this.rest, host: this.host, port: this.port});
     }
 
-    get tangoDevice(){
+    tangoDevice(){
         return new TangoDevice({rest: this.rest, host:this.host, port: this.port, name: this.device});
     }
 
@@ -175,8 +189,19 @@ export class TangoAttribute {
             .put(`?v=${v}`);
     }
 
-    subscribe(){
-        //TODO return new Subscription
+    /**
+     *
+     * @param subscriptions
+     * @param type
+     */
+    observe(subscriptions, type = 'change'){
+        subscriptions.listen({host:`${this.host}:${this.port}`,device: this.device, attribute: this.name, type})
+
+        return subscriptions.asObservable().pipe(
+            filter(msg => msg.host === `${this.host}:${this.port}` &&
+                                    msg.device === this.device &&
+                                    msg.attribute === this.name)
+        )
     }
 
     info(){
@@ -248,7 +273,6 @@ export class TangoHost {
 
     /**
      *
-     * @param {TangoRestApiV10} rest
      * @returns {TangoRestApiRequest}
      */
     toTangoRestApiRequest() {

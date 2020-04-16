@@ -3,7 +3,9 @@
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 27.11.2019
  */
-import {TangoAttribute, TangoDevice, TangoHost} from "./tango";
+import {TangoAttribute, TangoCommand, TangoDevice, TangoHost, TangoPipe} from "./tango";
+import {from, of} from "rxjs";
+import {switchMap} from "rxjs/operators";
 
 
 /**
@@ -11,6 +13,7 @@ import {TangoAttribute, TangoDevice, TangoHost} from "./tango";
  */
 export class TangoRestApi {
     constructor(host = '', options = {}) {
+        this.host = host;
         this.url = `${host}/tango/rest/v10`;
         this.options = options;
     }
@@ -19,15 +22,23 @@ export class TangoRestApi {
         return this.toTangoRestApiRequest().get();
     }
 
-    newTangoHost({host, port} = {host:'localhost', port: 10000}){
+    newTangoHost({host='localhost', port=10000}){
         return new TangoHost({rest: this, host, port})
     }
 
-    newTangoAttribute({host, port, device, name} = {}){
+    newTangoAttribute({host, port = 10000, device, name}){
         return new TangoAttribute({rest: this, host, port, device, name});
     }
 
-    newTangoDevice({host, port, device}){
+    newTangoCommand({host, port = 10000, device, name}){
+        return new TangoCommand({rest: this, host, port, device, name});
+    }
+
+    newTangoPipe({host, port = 10000, device, name}){
+        return new TangoPipe({rest: this, host, port, device, name})
+    }
+
+    newTangoDevice({host, port=10000, device}){
         return new TangoDevice({rest: this, host, port, device});
     }
 
@@ -40,54 +51,24 @@ export class TangoRestApi {
     }
 }
 
-let eventbus = {
-    publish(channel, event, msg){
-        console.log(`${channel.event}`, msg);
-    }
-};
-
 /**
  * Tango REST API client
  *
  * @class [TangoRestApiRequest]
  * @property {string} url
- * @property {string} type GET|POST|PUT|DELETE
- * @property {object} transport. fetch by default
- * @property {object} result
- * @property {object} failure
+ * @property {object} [options={}] options
+ * @property {object} [transport=fetch] transport. fetch by default
  */
 export class TangoRestApiRequest
     /** @lends  TangoRestApiRequest */
 {
-    static registerEventBus(v){
-        eventbus = v;
-    }
-
     constructor(url, options = {}, transport = fetch){
         this.url = url;
-        this.response = null;
-        this.failure = null;
         this.transport = transport;
         this.options = options;
     }
 
     /**
-     *
-     * @event tango_rest_client.rest_failure
-     * @type {OpenAjax}
-     * @property {TangoRestApiRequest} data
-     * @memberof TangoWebappPlatform
-     */
-    /**
-     *
-     * @event tango_rest_client.rest_success
-     * @type {OpenAjax}
-     * @property {TangoRestApiRequest} data
-     * @memberof TangoWebappPlatform
-     */
-    /**
-     * @fires tango_rest_client.rest_failure
-     * @fires tango_rest_client.rest_success
      *
      * @param resp
      * @returns {*}
@@ -104,7 +85,6 @@ export class TangoRestApiRequest
     }
 
     /**
-     * @fires tango_webapp.rest_failure
      *
      * @param {TypeError} resp
      * @private
@@ -177,7 +157,6 @@ export class TangoRestApiRequest
      * @returns {TangoRestApiRequest}
      */
     commands(name) {
-        //TODO check devices branch
         this.url += '/commands';
         if (name) this.url += `/${name}`;
         return this;
@@ -188,65 +167,64 @@ export class TangoRestApiRequest
      * @returns {TangoRestApiRequest}
      */
     attributes(name) {
-        //TODO check devices branch
         this.url += '/attributes';
         if (name) this.url += `/${name}`;
         return this;
     }
 
     value() {
-        //TODO check devices branch
         this.url += '/value';
         return this;
     }
 
     /**
-     * Fires event to OpenAjax
-     * @fires tango_webapp.rest_success
-     * @fires tango_webapp.rest_failure
-     * @returns {promise}
+     *
+     * @param {string} [what=''] what
+     * @returns {Promise<*>}
      */
-    get(what) {
+    get(what = '') {
         if (what) this.url += what;
-
-        return this.transport.call(null, this.url,Object.assign(this.options,{
+        const options = {
+            ...this.options,
             method: "GET"
-        }))
+        }
+
+        return this.transport.call(null, this.url, options)
             .catch((resp) => this.onFailure(resp))
             .then((resp) => this.onSuccess(resp));
     }
 
     /**
-     * Fires event to OpenAjax
-     * @fires tango_webapp.rest_success
-     * @fires tango_webapp.rest_failure
-     * @returns {Promise}
+     *
+     * @param {string} [what=''] what
+     * @param {*} [data] data
+     * @returns {Promise<*>}
      */
-    post(what, data) {
+    post(what = '', data) {
         if (what) this.url += what;//TODO if no what is provided data will be treated as what -> failure
-        const params = Object.assign(this.options,{
-            method: "POST"
-        });
+        const options = {
+            ...this.options,
+            method: "POST",
+            headers: {
+                ...this.options.headers,
+                "Content-type": "application/json"
+            }
+        };
         if(data)
-            Object.assign(params, {
-                headers:Object.assign(params,{
-                    "Content-type": "application/json"
-                }),
-                body: (typeof data == 'object') ? JSON.stringify(data) : data
-            });
+            options.body = (typeof data == 'object') ? JSON.stringify(data) : data;
 
-        return this.transport.call(null, this.url, params)
+        return this.transport.call(null, this.url, options)
             .catch((resp) => this.onFailure(resp))
             .then((resp) => this.onSuccess(resp));
     }
 
     /**
-     * Fires event to OpenAjax
-     * @fires tango_webapp.rest_success
-     * @fires tango_webapp.rest_failure
-     * @returns {Promise}
+     *
+     * @param {string} [what=''] what
+     * @param {*} [data] data
+     * @returns {Promise<*>}
      */
-    put(what, data = {}) {
+    put(what = '', data = {}) {
         if (what) this.url += what;//TODO if no what is provided data will be treated as what -> failure
         const options = {
             ...this.options,
@@ -263,17 +241,56 @@ export class TangoRestApiRequest
     }
 
     /**
-     * Fires event to OpenAjax
-     * @fires tango_webapp.rest_success
-     * @fires tango_webapp.rest_failure
-     * @returns {webix.promise}
+     *
+     * @param {string} [what=''] what
+     * @returns {Promise<*>}
      */
-    "delete"(what) {
+    "delete"(what='') {
         if (what) this.url += what;
-        return this.transport.call(null,this.url, Object.assign(this.options,{
+        const options = {
+            ...this.options,
             method: "DELETE"
-        }))
+        }
+        return this.transport.call(null,this.url, options)
             .catch((resp) => this.onFailure(resp))
             .then((resp) => this.onSuccess(resp));
+    }
+
+    /**
+     * Transforms this instance so that end methods ({@link this#get}, {@link this#put}, {@link this#post} ,{@link this#delete})
+     * do return Observable<*> instead of Promise<*>
+     *
+     * @return {TangoRestApiRequest}
+     */
+    observe(){
+        return new class extends TangoRestApiRequest {
+            constructor(request) {
+                super(request.url, request.options, request.transport);
+            }
+
+            get(what){
+                return of(super.get).pipe(
+                    switchMap(upstream => from(upstream.call(this, what)))
+                );
+            }
+
+            put(what, data = {}) {
+                return of(super.put).pipe(
+                    switchMap(upstream => from(upstream.call(this, what, data)))
+                );
+            }
+
+            post(what, data) {
+                return of(super.post).pipe(
+                    switchMap(upstream => from(upstream.call(this, what, data)))
+                );
+            }
+
+            "delete"(what){
+                return of(super.delete).pipe(
+                    switchMap(upstream => from(upstream.call(this, what)))
+                );
+            }
+        }(this);
     }
 }
