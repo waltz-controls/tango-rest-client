@@ -6,6 +6,7 @@
 import {TangoAttribute, TangoDevice, TangoHost, TangoRestApi, TangoRestApiRequest} from "../src/rest";
 import {retry, take, tap} from 'rxjs/operators';
 import {EventStream, Subscription, Subscriptions} from "../src/subscriptions";
+import {merge} from "rxjs";
 
 const tango_rest_api_url = "http://localhost:10001/tango/rest/v10";
 
@@ -286,19 +287,25 @@ describe('TangoRestApiRequest', function() {
                 }
             });
 
-            const subcription = subscriptions.asObservable().pipe(
-                take(10),
-                tap(msg => console.log(msg))
-            ).subscribe(() => done());
-
-            subscriptions.listen({host:'localhost:10000',device:'sys/tg_test/1',attribute:'double_scalar_w',type:'change'}, )
-
-            subscriptions.listen({host:'localhost:10000',device:'sys/tg_test/1',attribute:'state',type:'change'}, )
-            subscriptions.listen({host:'localhost:10000',device:'sys/tg_test/1',attribute:'status',type:'change'}, )
+            subscriptions.observe({host:'localhost:10000',device:'sys/tg_test/1',attribute:'ampli',type:'change'})
+                .pipe(
+                    take(100),
+                    tap(msg => console.log(msg))
+                ).subscribe(() => done());
 
 
             setTimeout(() => {
-                subscriptions.listen({host:'localhost:10000',device:'sys/tg_test/1',attribute:'double_scalar',type:'change'}, 'http://localhost:10001')
+                merge(
+                    subscriptions.observe({host:'localhost:10000',device:'sys/tg_test/1',attribute:'double_scalar_w',type:'change'}),
+
+                    subscriptions.observe({host:'localhost:10000',device:'sys/tg_test/1',attribute:'state',type:'change'} ),
+                    subscriptions.observe({host:'localhost:10000',device:'sys/tg_test/1',attribute:'status',type:'change'} )
+                ).pipe(
+                    take(100),
+                    tap(msg => console.log(msg))
+                ).subscribe(() => done());
+
+
             }, 5000)
 
             // setTimeout(() => {
@@ -323,9 +330,15 @@ describe('TangoRestApiRequest', function() {
                 }
             });
 
+            rest.newTangoAttribute({host:'xxx',device:'sys/tg_test/2',name:'state'})
+                .eventStream(subscriptions).pipe(
+                take(100),
+                tap(msg => console.log(msg))
+            ).subscribe({error: err => console.log('Errored!!!', err)})
+
             rest.newTangoAttribute({host:'localhost',device:'sys/tg_test/2',name:'state'})
-                .observe(subscriptions).pipe(
-                    take(10),
+                .eventStream(subscriptions).pipe(
+                    take(100),
                     tap(msg => console.log(msg))
                 ).subscribe(() => done())
 

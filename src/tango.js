@@ -190,18 +190,14 @@ export class TangoAttribute {
     }
 
     /**
+     * Opens an event stream for this attribute
      *
-     * @param subscriptions
-     * @param type
+     * @param {Subscriptions} subscriptions
+     * @param {string} [type='change'] type
+     * @return {Observable}
      */
-    observe(subscriptions, type = 'change'){
-        subscriptions.listen({host:`${this.host}:${this.port}`,device: this.device, attribute: this.name, type})
-
-        return subscriptions.asObservable().pipe(
-            filter(msg => msg.host === `${this.host}:${this.port}` &&
-                                    msg.device === this.device &&
-                                    msg.attribute === this.name)
-        )
+    eventStream(subscriptions, type = 'change'){
+        return subscriptions.observe({host:`${this.host}:${this.port}`,device: this.device, attribute: this.name, type})
     }
 
     info(){

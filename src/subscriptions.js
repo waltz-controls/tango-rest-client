@@ -1,5 +1,5 @@
 import {TangoRestApiRequest} from "./rest";
-import {from, fromEvent, Observable, of, Subject, using} from "rxjs";
+import {from, fromEvent, Observable, of, Subject, throwError, using} from "rxjs";
 import {delay, find, map, mergeMap, retryWhen, share, switchMap, tap} from "rxjs/operators";
 
 const kEventSourceOpenTimeout = 3000;
@@ -20,19 +20,21 @@ function findEventByTarget(target) {
  * @param {{}} options
  */
 function createConnection(host, options){
+    const streamId = +new Date();
     return of(host).pipe(
-        tap(host => console.debug(`Opening EventStream on ${host}`)),
+        tap(host => console.debug(`${streamId} Opening EventStream on ${host}`)),
         switchMap(host =>
             from(new TangoRestApiRequest(`${host}/tango/subscriptions`, {...options,mode:'cors'}, fetch)
                 .post("", this.subscription.events.map(event => event.target)))),
         map(resp => this.subscription = new Subscription({...resp,url: `${host}/tango/subscriptions/${resp.id}`, source: new EventStream(`${host}/tango/subscriptions/${resp.id}/event-stream`)})),
         switchMap(subscription => subscription.source.open()),
         retryWhen(err => err.pipe(
-            tap(err=> console.error("EventStream error!",err)),
+            tap(err=> console.error(`${streamId} EventStream error!`,err)),
             delay(kEventSourceOpenTimeout)
         )),
-        tap(() => console.debug('EventStream is open')),
-        tap(() => this.subscription.events.forEach(event => this.subscription.source.stream(event.id).subscribe(this.subject))),
+        tap(() => console.debug(`${streamId} EventStream is open`)),
+        tap(() => this.subscription.events
+            .forEach(event => this.subscribe(event))),
         share()
     )
 }
@@ -47,16 +49,27 @@ export class Subscriptions {
     constructor(host = '',options = {}) {
         this.options = options;
         this.subscription = new Subscription({events:[]});
-        this.subject = new Subject();
+
+        this.subjects = new Map();
+
         this.connection = createConnection.call(this, host, options);
+        this.unload = fromEvent(window, "onbeforeunload").pipe(
+            switchMap(()=>of(this.subscription.source)),
+            tap(()=>console.debug("Closing EventStream!"))
+        ).subscribe(source => source.unsubscribe());
     }
 
     /**
      *
-     * @return {Observable<EventStream>}
+     * @param event
+     * @return {Subject}
      */
-    connect(){
-        return this.connection;
+    subscribe(event){
+        const key = JSON.stringify(event.target);
+        const subject = this.subjects.get(key) || new Subject();
+        this.subjects.set(key, subject);
+        this.subscription.source.stream(event.id).subscribe(subject);
+        return subject;
     }
 
     /**
@@ -67,33 +80,16 @@ export class Subscriptions {
      * @param device
      * @param attribute
      * @param type
+     * @return {Observable}
      */
-    listen({host, device, attribute, type}){
+    observe({host, device, attribute, type}){
         const target = new Target(host, device, attribute, type);
 
-        of(target).pipe(
-            switchMap(() => this.subscription.source ? of(target): this.connect()),
+        return of(target).pipe(
+            switchMap(() => this.subscription.source ? of(target): this.connection),
             map(() => this.subscription.events.find(findEventByTarget(target))),
-            switchMap(event => event? of() : this.subscription.putTarget(target, this.options)),
-            tap(event => this.subscription.events.push(event))
-        ).subscribe({
-                    next: event => {
-                        this.subscription.source.stream(event.id)
-                            .subscribe(this.subject)
-                    },
-                    error: err => {
-                        console.error(err)
-                        this.listen({host, device, attribute, type})
-                    }
-                });
-    }
-
-    /**
-     *
-     * @return {Observable<>}
-     */
-    asObservable(){
-        return this.subject.pipe(
+            switchMap(event => event? of(event) : this.subscription.putTarget(target, this.options)),
+            switchMap(event => this.subjects.has(JSON.stringify(event.target)) ? this.subjects.get(JSON.stringify(event.target)): this.subscribe(event)),
             map(msg => {
                 const result = {
                     ...this.subscription.events.find(event => event.id == msg.type).target,
@@ -111,7 +107,7 @@ export class Subscriptions {
                     };
                 }
             })
-        );
+        )
     }
 }
 
@@ -142,9 +138,9 @@ class Subscription {
             switchMap( url => from(new TangoRestApiRequest(url, {...options,mode:'cors'}, fetch).put("", [target]))),
             mergeMap(response => from(response.map(event => new Event(event)))),
             find(findEventByTarget(target)),
-            tap(event => event ? console.debug(`${streamId} Success!`, event) : console.error(`${streamId} Failure. See server side logs...`)),
-            switchMap(event => event ? of(event) : of())
-
+            tap(event => event ? console.debug(`${streamId} Success!`, event) : console.error(`${streamId} Failure!!! See server side logs...`)),
+            switchMap(event => event ? of(event) : throwError(`Failed to put new target into subscriptions ${this.url}. See server side logs...`)),
+            tap(event => this.events.push(event))
         )
     }
 }
@@ -155,7 +151,7 @@ class Subscription {
 class EventStream {
     constructor(url){
         this.url = url;
-        this._stream = null;
+        this.eventSource = null;
     }
 
     /**
@@ -164,14 +160,14 @@ class EventStream {
      */
     open(){
         return using(() => {
-                this._stream = new EventSource(this.url,{
+                this.eventSource =new EventSource(this.url,{
                     withCredentials: true
                 });
                 return this;
             },
             eventStream => new Observable(subscriber => {
-                eventStream._stream.onopen = () => subscriber.next();
-                eventStream._stream.onerror = err => subscriber.error(err);
+                eventStream.eventSource.onopen = () => subscriber.next();
+                eventStream.eventSource.onerror = err => subscriber.error(err);
             }))
     }
 
@@ -181,7 +177,7 @@ class EventStream {
      * @return {Observable<*>}
      */
     stream(id = 'onmessage'){
-        return fromEvent(this._stream, id);
+        return fromEvent(this.eventSource, id);
     }
 
 
@@ -190,7 +186,7 @@ class EventStream {
      *
      */
     unsubscribe() {
-        this._stream.close();
+        this.eventSource.close();
     }
 }
 
