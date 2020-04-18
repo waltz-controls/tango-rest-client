@@ -1,15 +1,26 @@
 import {TangoRestApi} from "./rest";
 import {Observable} from "rxjs";
-import {filter} from "rxjs/operators";
+import {map} from "rxjs/operators";
 
+/**
+ * @class [TangoDevice]
+ */
 export class TangoDevice {
+    /**
+     *
+     * @param rest
+     * @param host
+     * @param port
+     * @param name
+     * @param alias
+     * @constructor
+     */
     constructor({rest, host, port, name, alias} = {}) {
         this.rest = rest;
         this.host = host;
         this.port = parseInt(port);
         this.name = name;
         this.alias = alias;
-
     }
 
     /**
@@ -17,29 +28,52 @@ export class TangoDevice {
      * @returns {TangoHost}
      */
     tangoHost() {
-        return new TangoHost({rest: this.rest, host:this.host, port: this.port})
+        return new TangoHost({...this})
     }
 
+    /**
+     *
+     * @param name
+     * @return {TangoCommand}
+     */
     newCommand(name){
-        return new TangoCommand({rest: this.rest, host: this.host, port: this.port, device: this.name, name});
+        return new TangoCommand({...this, device: this.name, name});
     }
 
+    /**
+     *
+     * @param name
+     * @return {TangoAttribute}
+     */
     newAttribute(name){
-        return new TangoAttribute({rest: this.rest, host: this.host, port: this.port, device: this.name, name});
+        return new TangoAttribute({...this, device: this.name, name});
     }
 
+    /**
+     *
+     * @param name
+     * @return {TangoPipe}
+     */
     newPipe(name){
-        return new TangoPipe({rest: this.rest, host: this.host, port: this.port, device: this.name, name});
+        return new TangoPipe({...this, device: this.name, name});
     }
 
+    /**
+     *
+     * @return {Observable<*>}
+     */
     info(){
         return this.rest.toTangoRestApiRequest()
             .hosts(this.host, this.port)
             .devices(this.name)
             .get()
-            .then(resp => resp.info);
+            .pipe(map(resp => resp.info));
     }
 
+    /**
+     *
+     * @return {Observable<*>}
+     */
     properties(){
         return this.rest.toTangoRestApiRequest()
             .hosts(this.host, this.port)
@@ -53,14 +87,10 @@ export class TangoDevice {
      * @param subscriptions
      * @return {Observable<*>}
      */
-    observe(subscriptions){
-        subscriptions.listen({host:`${this.host}:${this.port}`,device: this.name, attribute: 'state', type: 'change'})
-        subscriptions.listen({host:`${this.host}:${this.port}`,device: this.name, attribute: 'status', type: 'change'})
-
-        return subscriptions.asObservable().pipe(
-            filter(msg => msg.host === `${this.host}:${this.port}` &&
-                msg.device === this.name &&
-                (msg.attribute === 'state' || msg.attribute === 'status'))
+    eventStream(subscriptions){
+        return merge(
+            subscriptions.observe({host:`${this.host}:${this.port}`,device: this.name, attribute: 'state', type: 'change'}),
+            subscriptions.observe({host:`${this.host}:${this.port}`,device: this.name, attribute: 'status', type: 'change'}),
         )
     }
 
@@ -72,6 +102,9 @@ export class TangoDevice {
     }
 }
 
+/**
+ *
+ */
 export class TangoPipe {
     constructor({rest, host, port, device, name} = {}) {
         this.rest = rest;
@@ -81,18 +114,25 @@ export class TangoPipe {
         this.name = name;
     }
 
+    /**
+     *
+     * @return {TangoHost}
+     */
     tangoHost(){
-        return new TangoHost({rest: this.rest, host: this.host, port: this.port});
-    }
-
-    tangoDevice(){
-        return new TangoDevice({rest: this.rest, host:this.host, port: this.port, name: this.device});
+        return new TangoHost({...this});
     }
 
     /**
      *
-     * @param {*} argin
-     * @returns {Promise}
+     * @return {TangoDevice}
+     */
+    tangoDevice(){
+        return new TangoDevice({...this, name: this.device});
+    }
+
+    /**
+     *
+     * @returns {Observable<*>}
      */
     read(){
         return this.rest.toTangoRestApiRequest()
@@ -102,6 +142,11 @@ export class TangoPipe {
             .get()
     }
 
+    /**
+     *
+     * @param v
+     * @return {Observable<*>}
+     */
     write(v){
         return this.rest.toTangoRestApiRequest()
             .hosts(this.host, this.port)
@@ -111,6 +156,9 @@ export class TangoPipe {
     }
 }
 
+/**
+ * @class [TangoCommand]
+ */
 export class TangoCommand {
     constructor({rest, host, port, device, name} = {port:10000}) {
         this.rest = rest;
@@ -120,18 +168,26 @@ export class TangoCommand {
         this.name = name;
     }
 
+    /**
+     *
+     * @return {TangoHost}
+     */
     tangoHost(){
-        return new TangoHost({rest: this.rest, host: this.host, port: this.port});
+        return new TangoHost({...this});
     }
 
+    /**
+     *
+     * @return {TangoDevice}
+     */
     tangoDevice(){
-        return new TangoDevice({rest: this.rest, host:this.host, port: this.port, name: this.device});
+        return new TangoDevice({...this, name: this.device});
     }
 
     /**
      *
      * @param {*} argin
-     * @returns {Promise}
+     * @returns {Observable<*>}
      */
     execute(argin){
         return this.rest.toTangoRestApiRequest()
@@ -142,6 +198,9 @@ export class TangoCommand {
     }
 }
 
+/**
+ * @class [TangoAttribute]
+ */
 export class TangoAttribute {
     /**
      *
@@ -161,16 +220,16 @@ export class TangoAttribute {
     }
 
     tangoHost(){
-        return new TangoHost({rest: this.rest, host: this.host, port: this.port});
+        return new TangoHost({...this});
     }
 
     tangoDevice(){
-        return new TangoDevice({rest: this.rest, host:this.host, port: this.port, name: this.device});
+        return new TangoDevice({...this, name: this.device});
     }
 
     /**
      *
-     * @returns {Promise}
+     * @returns {Observable<*>}
      */
     read() {
         return this.toTangoRestApiRequest()
@@ -181,7 +240,7 @@ export class TangoAttribute {
     /**
      *
      * @param v
-     * @returns {Promise}
+     * @returns {Observable<*>}
      */
     write(v){
         return this.toTangoRestApiRequest()
@@ -200,11 +259,19 @@ export class TangoAttribute {
         return subscriptions.observe({host:`${this.host}:${this.port}`,device: this.device, attribute: this.name, type})
     }
 
+    /**
+     *
+     * @return {Observable<*>}
+     */
     info(){
         return this.toTangoRestApiRequest()
             .get(`info`);
     }
 
+    /**
+     *
+     * @return {Observable<*>}
+     */
     properties(){
         return this.rest.toTangoRestApiRequest()
             .hosts(this.host, this.port)
@@ -222,6 +289,9 @@ export class TangoAttribute {
     }
 }
 
+/**
+ * @class [TangoHost]
+ */
 export class TangoHost {
     constructor({rest, host, port} = {}) {
         this.rest = rest;
@@ -229,29 +299,43 @@ export class TangoHost {
         this.port = parseInt(port);
     }
 
+    /**
+     *
+     * @return {Observable<string[]>}
+     */
     info(){
         return this.rest.toTangoRestApiRequest()
             .hosts(this.host, this.port)
             .get()
-            .then(resp => resp.info);
-    }
-
-    device(name){
-        return this.rest.toTangoRestApiRequest()
-            .hosts(this.host, this.port)
-            .devices(name)
-            .get(); //TODO convert to TangoDevice?
+            .pipe(map(resp => resp.info));
     }
 
     /**
      *
-     * @returns {Promise<TangoDatabase>}
+     * @param name
+     * @return {Observable<TangoDevice>}
+     */
+    device(name){
+        return this.rest.toTangoRestApiRequest()
+            .hosts(this.host, this.port)
+            .devices(name)
+            .get()
+            .pipe(
+                map(resp => new TangoDevice({...this,name, alias:resp.alias}))
+            );
+    }
+
+    /**
+     *
+     * @returns {Observable<TangoDatabase>}
      */
     database(){
         return this.rest.toTangoRestApiRequest()
             .hosts(this.host, this.port)
             .get('?filter=name')
-            .then(resp => new TangoDatabase({rest: this.rest, host:this.host, port: this.port, name: resp.name}))
+            .pipe(
+                map(resp => new TangoDatabase({rest: this.rest, host:this.host, port: this.port, name: resp.name}))
+            );
     }
 
     /**
@@ -285,34 +369,33 @@ export class TangoDatabase extends TangoDevice {
      * Returns error response if alias is not set - limitation of the native Tango API
      *
      * @param name
-     * @return {Promise<string>}
+     * @return {Observable<string>}
      */
     deviceAlias(name) {
         return this.newCommand("DbGetDeviceAlias").execute(name)
-            .then(function(resp){
-                return resp.output;
-            })
+            .pipe(
+                map(resp => resp.output)
+            );
     }
     /**
      *
-     * @return {Promise<string[]>}
+     * @return {Observable<string[]>}
      */
     deviceAliasList(){
         return this.newCommand("DbGetDeviceAliasList").execute("*")
-            .then(function(resp){
-                return resp.output;
-            })
+            .pipe(
+                map(resp => resp.output)
+            );
     }
     /**
      *
      * @param alias
-     * @return {Promise<string>}
+     * @return {Observable<string>}
      */
     deviceByAlias(alias){
-        return this.newCommand("DbGetAliasDevice").execute(alias)
-            .then(function(resp){
-                return resp.output;
-            })
+        return this.newCommand("DbGetAliasDevice").pipe(
+            map(resp => resp.output)
+        );
     }
     /**
      *

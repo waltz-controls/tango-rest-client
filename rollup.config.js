@@ -7,7 +7,7 @@ export default [
     // browser-friendly UMD build
     {
         input: 'src/*.js',
-        external: ['@waltz-controls/eventbus', 'rxjs'],
+        external: ['@waltz-controls/eventbus', 'rxjs', 'rxjs/operators', 'rxjs/fetch'],
         output: {
             file: pkg.module,
             format: 'es',

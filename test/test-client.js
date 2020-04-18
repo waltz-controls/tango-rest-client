@@ -19,7 +19,7 @@ describe('TangoRestApiRequest', function() {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
                 })
             }, fetch);
-            req.get()
+            req.get().toPromise()
                 .then((resp)=> {
                     console.log(resp);
                     done();
@@ -36,7 +36,7 @@ describe('TangoRestApiRequest', function() {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
                 })
             }, fetch);
-            req.get()
+            req.get().toPromise()
                 .then((resp)=> {
                     console.log(resp);
                 })
@@ -53,7 +53,7 @@ describe('TangoRestApiRequest', function() {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
                 })
             }, fetch);
-            req.get()
+            req.get().toPromise()
                 .then((resp)=> {
                     console.log(resp);
                     done();
@@ -70,7 +70,7 @@ describe('TangoRestApiRequest', function() {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
                 })
             }, fetch);
-            req.get()
+            req.get().toPromise()
                 .then((resp)=> {
                     console.log(resp);
                     done();
@@ -92,6 +92,7 @@ describe('TangoRestApiRequest', function() {
                 .attributes('double_scalar')
                 .value()
                 .get()
+                .toPromise()
                 .then((resp) => {
                     console.log(resp);
                     done();
@@ -113,6 +114,7 @@ describe('TangoRestApiRequest', function() {
                 .attributes('double_scalar')
                 .value()
                 .get()
+                .toPromise()
                 .then((resp) => {
                     console.log(resp);
                     done();
@@ -134,6 +136,7 @@ describe('TangoRestApiRequest', function() {
                 .attributes('double_scalar')
                 .value()
                 .get()
+                .toPromise()
                 .then((resp) => {
                     console.log(resp);
                 })
@@ -153,6 +156,7 @@ describe('TangoRestApiRequest', function() {
 
             req.newTangoHost({host:'localhost', port:10000})
                 .info()
+                .toPromise()
                 .then((resp) => {
                     console.log(resp);
                     done();
@@ -173,6 +177,7 @@ describe('TangoRestApiRequest', function() {
 
             req.newTangoDevice({host:'localhost', port: 10000, device: 'sys/tg_test/1'})
                 .info()
+                .toPromise()
                 .then((resp) => {
                     console.log(resp);
                     done();
@@ -195,6 +200,7 @@ describe('TangoRestApiRequest', function() {
                 .hosts('localhost')
                 .devices()
                 .get("?wildcard=development/*/*&wildcard=test/*/*")
+                .toPromise()
                 .then((resp) => {
                     console.log(resp);
                     done();
@@ -215,6 +221,7 @@ describe('TangoRestApiRequest', function() {
 
             req.newTangoAttribute({host:'localhost', port:10000, device:'sys/tg_test/1', name:'double_scalar'})
                 .read()
+                .toPromise()
                 .then((resp) => {
                     console.log(resp);
                     done();
@@ -237,6 +244,7 @@ describe('TangoRestApiRequest', function() {
 
             req.newTangoHost({host:'localhost', port: 10000})
                 .database()
+                .toPromise()
                 .then(resp => {
                     console.log(resp);
                     done();
@@ -260,6 +268,7 @@ describe('TangoRestApiRequest', function() {
                 .attributes('double_scalar_w')
                 .value()
                 .put('?v=42')
+                .toPromise()
                 .then((resp) => {
                     console.log(resp);
                     done();
@@ -271,7 +280,7 @@ describe('TangoRestApiRequest', function() {
     });
 
     describe('#subscriptions',function(){
-        it('test RxTangoAttribute',function(done){
+        it('test RxTangoAttribute. See console...',function(){
             const rest = new TangoRestApi('http://localhost:10001',{
                 mode:'cors',
                 headers: {
@@ -291,7 +300,7 @@ describe('TangoRestApiRequest', function() {
                 .pipe(
                     take(100),
                     tap(msg => console.log(msg))
-                ).subscribe(() => done());
+                ).subscribe(() => console.log('Done! See console output...'));
 
 
             setTimeout(() => {
@@ -303,7 +312,7 @@ describe('TangoRestApiRequest', function() {
                 ).pipe(
                     take(100),
                     tap(msg => console.log(msg))
-                ).subscribe(() => done());
+                ).subscribe(() => console.log('Done! See console output...'));
 
 
             }, 5000)
@@ -314,7 +323,7 @@ describe('TangoRestApiRequest', function() {
             // subscriptions.connect('http://localhost:10001');
         });
 
-        it('#subscribe TangoAttribute',function(done){
+        it('#subscribe TangoAttribute. See console...',function(){
             const rest = new TangoRestApi('http://localhost:10001',{
                 mode:'cors',
                 headers: {
@@ -340,7 +349,7 @@ describe('TangoRestApiRequest', function() {
                 .eventStream(subscriptions).pipe(
                     take(100),
                     tap(msg => console.log(msg))
-                ).subscribe(() => done())
+                ).subscribe(() => console.log('Done! See console output...'))
 
 
 
@@ -352,7 +361,7 @@ describe('TangoRestApiRequest', function() {
     })
 
     describe('#rxjs',function(){
-        it('test RxTangoAttribute',function(done){
+        it('test TangoRestApiRequest',function(done){
             const req = new TangoRestApiRequest('http://localhost:10001/tango/rest/v10',{
                 mode:'cors',
                 headers: {
@@ -361,12 +370,12 @@ describe('TangoRestApiRequest', function() {
             });
 
 
-            req.observe().hosts('localhost').get().pipe(
+            req.hosts('localhost').get().pipe(
                 tap(resp => console.log(resp))
             ).subscribe(()=>done());
         });
 
-        it('test RxTangoAttribute fail/retry',function(done){
+        it('test TangoRestApiRequest fail/retry',function(done){
             const req = new TangoRestApiRequest('http://localhost:10001/tango/rest/v10',{
                 mode:'cors',
                 headers: {
@@ -375,11 +384,28 @@ describe('TangoRestApiRequest', function() {
             });
 
 
-            req.observe().hosts('xxx').get().pipe(
+            req.hosts('xxx').get().pipe(
                 retry(3)
             ).subscribe({
-                error: () => done()
+                error: (err) => {
+                    console.error(err);
+                    done()
+                }
             });
         });
+
+        it('test TangoRestApiRequest async/await', async function(){
+            const rest = new TangoRestApi('http://localhost:10001',{
+                mode:'cors',
+                headers: {
+                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
+                }
+            });
+
+
+            console.log(await rest.newTangoHost().info().toPromise());
+
+        });
+
     })
 });
