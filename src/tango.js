@@ -2,8 +2,11 @@ import {TangoRestApi} from "./rest";
 import {Observable} from "rxjs";
 import {map} from "rxjs/operators";
 
+/** @module tango */
+
 /**
  * @class [TangoDevice]
+ * @memberof tango
  */
 export class TangoDevice {
     /**
@@ -25,7 +28,9 @@ export class TangoDevice {
 
     /**
      *
+     * @instance
      * @returns {TangoHost}
+     * @memberof tango.TangoDevice
      */
     tangoHost() {
         return new TangoHost({...this})
@@ -103,7 +108,8 @@ export class TangoDevice {
 }
 
 /**
- *
+ * @memberOf tango
+ * @class [TangoPipe]
  */
 export class TangoPipe {
     constructor({rest, host, port, device, name} = {}) {
@@ -157,6 +163,7 @@ export class TangoPipe {
 }
 
 /**
+ * @memberOf tango
  * @class [TangoCommand]
  */
 export class TangoCommand {
@@ -199,6 +206,7 @@ export class TangoCommand {
 }
 
 /**
+ * @memberOf tango
  * @class [TangoAttribute]
  */
 export class TangoAttribute {
@@ -290,6 +298,8 @@ export class TangoAttribute {
 }
 
 /**
+ *
+ * @memberOf tango
  * @class [TangoHost]
  */
 export class TangoHost {
@@ -360,6 +370,9 @@ export class TangoHost {
     }
 }
 
+/**
+ * @memberOf tango
+ */
 export class TangoDatabase extends TangoDevice {
     constructor({rest, host, port, name}){
         super({rest, host, port, name, alias: `${host}:${port}`})
