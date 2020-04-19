@@ -15,7 +15,7 @@ import {fromFetch} from "rxjs/fetch";
 export class TangoRestApi {
     constructor(host = '', options = {}) {
         this.host = host;
-        this.url = `${host}/tango/rest/v10`;
+        this.url = `${host}/tango/rest/v11`;
         this.options = options;
     }
 

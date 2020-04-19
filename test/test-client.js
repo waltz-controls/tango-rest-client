@@ -8,7 +8,7 @@ import {retry, take, tap} from 'rxjs/operators';
 import {EventStream, Subscription, Subscriptions} from "../src/subscriptions";
 import {merge} from "rxjs";
 
-const tango_rest_api_url = "http://localhost:10001/tango/rest/v10";
+const tango_rest_api_url = "http://localhost:10001/tango/rest/v11";
 
 describe('TangoRestApiRequest', function() {
     describe('#get()', function() {
@@ -362,7 +362,7 @@ describe('TangoRestApiRequest', function() {
 
     describe('#rxjs',function(){
         it('test TangoRestApiRequest',function(done){
-            const req = new TangoRestApiRequest('http://localhost:10001/tango/rest/v10',{
+            const req = new TangoRestApiRequest('http://localhost:10001/tango/rest/v11',{
                 mode:'cors',
                 headers: {
                     'Authorization': 'Basic ' + btoa('tango-cs:tango')
@@ -376,7 +376,7 @@ describe('TangoRestApiRequest', function() {
         });
 
         it('test TangoRestApiRequest fail/retry',function(done){
-            const req = new TangoRestApiRequest('http://localhost:10001/tango/rest/v10',{
+            const req = new TangoRestApiRequest('http://localhost:10001/tango/rest/v11',{
                 mode:'cors',
                 headers: {
                     'Authorization': 'Basic ' + btoa('tango-cs:tango')
