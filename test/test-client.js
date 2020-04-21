@@ -231,6 +231,26 @@ describe('TangoRestApiRequest', function() {
 
                 });
         });
+
+        it('should fail to get sys/tg_test/1/double_scalar', function (done) {
+            const req = new TangoRestApi('http://localhost:10001', {
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('q:1')
+                })
+            }, fetch);
+
+            req.newTangoAttribute({host:'localhost', port:10000, device:'sys/tg_test/1', name:'double_scalar'})
+                .read()
+                .toPromise()
+                .then((resp) => {
+                    console.log(resp);
+                })
+                .catch(err => {
+                    console.error(err);
+                    done();
+                });
+        });
     });
 
     describe('#database', function(){
