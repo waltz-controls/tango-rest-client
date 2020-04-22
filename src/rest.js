@@ -4,7 +4,7 @@
  * @since 27.11.2019
  */
 import {TangoAttribute, TangoCommand, TangoDevice, TangoHost, TangoPipe} from "./tango";
-import {from, of, throwError} from "rxjs";
+import {from, throwError} from "rxjs";
 import {catchError, switchMap} from "rxjs/operators";
 import {fromFetch} from "rxjs/fetch";
 
@@ -59,9 +59,18 @@ export class TangoRestApi {
  * @return {Observable<*>}
  */
 function onSuccess(resp){
-    return from(resp.json()).pipe(
-        switchMap(json => resp.ok ? of(json): throwError(json))
-    );
+    if(resp.ok)
+        return from(resp.json());
+    else {
+        switch (resp.status) {
+            case 400:
+                return from(resp.json()).pipe(
+                    switchMap(json => throwError(json))
+                );
+            default:
+                return onFailure.call(resp, resp);
+        }
+    }
 }
 
 /**
