@@ -68,7 +68,7 @@ function onSuccess(resp){
                     switchMap(json => throwError(json))
                 );
             default:
-                return onFailure.call(resp, resp);
+                return onFailure.call(resp, new Error(`${resp.status}: ${resp.statusText}`));
         }
     }
 }
@@ -76,15 +76,15 @@ function onSuccess(resp){
 /**
  *
  * @private
- * @param resp
+ * @param {typeof Error} error
  * @return {Observable<*>}
  */
-function onFailure(resp){
+function onFailure(error){
     return throwError({
         errors: [
             {
-                reason: resp.toString(),
-                description: resp.message,
+                reason: error.toString(),
+                description: error.message,
                 severity: 'ERR',
                 origin: this.url
             }
