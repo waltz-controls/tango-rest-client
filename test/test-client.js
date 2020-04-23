@@ -546,5 +546,24 @@ describe('TangoRestApiRequest', function() {
                 done()
             })
         });
+
+        it('test TangoCommand Void',function(done){
+            const rest = new TangoRestApi('http://localhost:10001',{
+                mode:'cors',
+                headers: {
+                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
+                }
+            });
+
+
+            const cmd = rest.newTangoCommand({device: 'sys/tg_test/1', name: 'DevVoid'})
+
+            cmd.execute().pipe(
+                tap(resp => console.log(resp))
+            ).subscribe(resp => {
+                assert.isTrue(resp.output === null || resp.output === undefined);
+                done()
+            })
+        });
     })
 });
