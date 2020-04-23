@@ -201,7 +201,12 @@ export class TangoCommand {
             .hosts(this.host, this.port)
             .devices(this.device)
             .commands(this.name)
-            .put('', argin)
+            .put('?filter=!input', {
+                host: `${this.host}:${this.port}`,
+                device: this.device,
+                name: this.name,
+                input: argin
+            })
     }
 }
 

@@ -8,6 +8,8 @@ import {retry, take, tap} from 'rxjs/operators';
 import {EventStream, Subscription, Subscriptions} from "../src/subscriptions";
 import {merge} from "rxjs";
 
+const assert = chai.assert;
+
 const tango_rest_api_url = "http://localhost:10001/tango/rest/v11";
 
 describe('TangoRestApiRequest', function() {
@@ -251,6 +253,26 @@ describe('TangoRestApiRequest', function() {
                     done();
                 });
         });
+
+        it('should fail to get sys/tg_test/1/double_spectrum_ro', function (done) {
+            const req = new TangoRestApi('http://localhost:10001', {
+                mode: 'cors',
+                headers: new Headers({
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                })
+            }, fetch);
+
+            req.newTangoAttribute({host:'localhost', port:10000, device:'sys/tg_test/1', name:'double_spectrum_ro'})
+                .read()
+                .toPromise()
+                .then((resp) => {
+                    console.log(resp);
+                    done();
+                })
+                .catch(err => {
+                    console.error(err);
+                });
+        });
     });
 
     describe('#database', function(){
@@ -427,5 +449,102 @@ describe('TangoRestApiRequest', function() {
 
         });
 
+    })
+
+    describe('#command',function(){
+        it('test TangoCommand String',function(done){
+            const rest = new TangoRestApi('http://localhost:10001',{
+                mode:'cors',
+                headers: {
+                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
+                }
+            });
+
+
+            const cmd = rest.newTangoCommand({device: 'sys/tg_test/1', name: 'DevString'})
+
+            cmd.execute('Hello World!').pipe(
+                tap(resp => console.log(resp))
+            ).subscribe(resp => {
+                assert.equal(resp.output, "Hello World!");
+                done()
+            })
+        });
+
+        it('test TangoCommand Double',function(done){
+            const rest = new TangoRestApi('http://localhost:10001',{
+                mode:'cors',
+                headers: {
+                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
+                }
+            });
+
+
+            const cmd = rest.newTangoCommand({device: 'sys/tg_test/1', name: 'DevDouble'})
+
+            cmd.execute(3.14).pipe(
+                tap(resp => console.log(resp))
+            ).subscribe(resp => {
+                assert.equal(resp.output, 3.14);
+                done()
+            })
+        });
+
+        it('test TangoCommand StringArray',function(done){
+            const rest = new TangoRestApi('http://localhost:10001',{
+                mode:'cors',
+                headers: {
+                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
+                }
+            });
+
+
+            const cmd = rest.newTangoCommand({device: 'sys/tg_test/1', name: 'DevVarStringArray'})
+
+            cmd.execute(["Hello","World","!!!"]).pipe(
+                tap(resp => console.log(resp))
+            ).subscribe(resp => {
+                assert.deepEqual(resp.output, ["Hello","World","!!!"]);
+                done()
+            })
+        });
+
+        it('test TangoCommand DoubleArray',function(done){
+            const rest = new TangoRestApi('http://localhost:10001',{
+                mode:'cors',
+                headers: {
+                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
+                }
+            });
+
+
+            const cmd = rest.newTangoCommand({device: 'sys/tg_test/1', name: 'DevVarDoubleArray'})
+
+            cmd.execute([3.14,2.87,19.84]).pipe(
+                tap(resp => console.log(resp))
+            ).subscribe(resp => {
+                assert.deepEqual(resp.output, [3.14,2.87,19.84]);
+                done()
+            })
+        });
+
+        it('test TangoCommand DoubleStringArray',function(done){
+            const rest = new TangoRestApi('http://localhost:10001',{
+                mode:'cors',
+                headers: {
+                    'Authorization': 'Basic ' + btoa('tango-cs:tango')
+                }
+            });
+
+
+            const cmd = rest.newTangoCommand({device: 'sys/tg_test/1', name: 'DevVarDoubleStringArray'})
+
+            cmd.execute({svalue:["Hello","World","!!!"],dvalue:[3.14,2.87,19.84]}).pipe(
+                tap(resp => console.log(resp))
+            ).subscribe(resp => {
+                assert.deepEqual(resp.output, {svalue:["Hello","World","!!!"],dvalue:[3.14,2.87,19.84]});
+                done()
+            })
+        });
     })
 });

@@ -64,6 +64,7 @@ function onSuccess(resp){
     else {
         switch (resp.status) {
             case 400:
+            case 404:
                 return from(resp.json()).pipe(
                     switchMap(json => throwError(json))
                 );
