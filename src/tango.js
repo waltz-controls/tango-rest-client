@@ -4,6 +4,183 @@ import {map} from "rxjs/operators";
 
 /** @module tango */
 
+
+/**
+ *
+ * @type {string}
+ */
+const kTangoIdSeparator = '/';
+
+/**
+ *
+ * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
+ * @since 22.10.2019
+ */
+export class TangoId {
+    constructor({host, port, domain, family, device, member}) {
+        this.tango_host = host;
+        this.tango_port = port;
+        this.tango_domain = domain;
+        this.tango_family = family;
+        this.tango_device = device;
+        this.tango_member = member;
+    }
+
+
+    /**
+     *
+     * @param {string} [host='localhost'] host
+     * @return {TangoId}
+     */
+    host(host='localhost'){
+        this.tango_host = host;
+        return this;
+    }
+
+    /**
+     *
+     * @param {string|int} [port=10000] port
+     * @return {TangoId}
+     */
+    port(port=10000){
+        this.tango_port = port;
+        return this;
+    }
+
+    /**
+     * Returns TangoHost id i.e. tango_host:tango_port
+     *
+     * @return {string}
+     */
+    getTangoHostId(){
+        return `${this.tango_host}:${this.tango_port}`;
+    }
+
+    /**
+     *
+     * @param {string} domain
+     * @return {TangoId}
+     */
+    domain(domain){
+        this.tango_domain = domain;
+        return this;
+    }
+
+    /**
+     *
+     * @param {string} family
+     * @return {TangoId}
+     */
+    family(family){
+        this.tango_family = family;
+        return this;
+    }
+
+    /**
+     *
+     * @param {string} device
+     * @return {TangoId}
+     */
+    device(device){
+        this.tango_device = device;
+        return this;
+    }
+
+    /**
+     * e.g. localhost:10000/sys/tg_test/1
+     *
+     * @return {string}
+     */
+    getTangoDeviceId(){
+        return `${this.getTangoHostId()}/${this.getTangoDeviceName()}`
+    }
+
+    /**
+     * e.g. sys/tg_test/1
+     *
+     * @return {string}
+     */
+    getTangoDeviceName(){
+        return `${this.tango_domain}/${this.tango_family}/${this.tango_device}`
+    }
+
+    /**
+     *
+     * @param {string} member
+     * @return {TangoId}
+     */
+    member(member){
+        this.tango_member = member;
+        return this;
+    }
+
+    /**
+     * e.g. localhost:10000/sys/tg_test/1/state
+     *
+     * @return {string}
+     */
+    getTangoMemberId(){
+        return `${this.getTangoHostId()}/${this.getTangoDeviceName()}/${this.tango_member}`
+    }
+
+    /**
+     * e.g. tango://localhost:10000/sys/tg_test/1
+     *
+     * @return {string}
+     */
+    getTangoDeviceFQDN(){
+        return `tango://${this.getTangoDeviceId()}`
+    }
+
+    /**
+     * e.g. tango://localhost:10000/sys/tg_test/1/state
+     *
+     * @return {string}
+     */
+    getTangoMemberFQDN(){
+        return `tango://${this.getTangoMemberId()}`
+    }
+
+    /**
+     *
+     * @param tangoHost
+     * @return {TangoId}
+     */
+    static fromTangoHost(tangoHost){
+        const [host, port] = tangoHost.split(":");
+        return new TangoId({host, port})
+    }
+
+    /**
+     *
+     * @param deviceId
+     * @return {TangoId}
+     */
+    static fromDeviceId(deviceId){
+        const [host_port, domain, family, device] = deviceId.split(kTangoIdSeparator);
+        const [host, port] = host_port.split(":");
+        return new TangoId({
+            host,
+            port,
+            domain,
+            family,
+            device
+        })
+    }
+
+    /**
+     *
+     * @param memberId
+     * @return {TangoId}
+     */
+    static fromMemberId(memberId){
+        const member = memberId.split(kTangoIdSeparator).pop();
+
+        return this.fromDeviceId(memberId)
+                        .member(member)
+    }
+}
+
 /**
  * @class [TangoDevice]
  * @memberof tango

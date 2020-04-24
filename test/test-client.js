@@ -3,10 +3,11 @@
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 27.11.2019
  */
-import {TangoAttribute, TangoDevice, TangoHost, TangoRestApi, TangoRestApiRequest} from "../src/rest";
+import {TangoRestApi, TangoRestApiRequest} from "../src/rest";
 import {retry, take, tap} from 'rxjs/operators';
-import {EventStream, Subscription, Subscriptions} from "../src/subscriptions";
+import {Subscriptions} from "../src/subscriptions";
 import {merge} from "rxjs";
+import {TangoId} from "../src/tango";
 
 const assert = chai.assert;
 
@@ -564,6 +565,22 @@ describe('TangoRestApiRequest', function() {
                 assert.isTrue(resp.output === null || resp.output === undefined);
                 done()
             })
+        });
+    })
+
+    describe('#tango_id',function(){
+        it('test TangoId',function(){
+            let tangoId = TangoId.fromTangoHost('localhost:10000');
+
+            assert.equal(tangoId.getTangoHostId(),'localhost:10000');
+
+            tangoId = TangoId.fromDeviceId('localhost:10000/sys/tg_test/1');
+
+            assert.equal(tangoId.getTangoDeviceFQDN(),'tango://localhost:10000/sys/tg_test/1');
+
+            tangoId = TangoId.fromMemberId('localhost:10000/sys/tg_test/1/state');
+
+            assert.equal(tangoId.getTangoMemberFQDN(),'tango://localhost:10000/sys/tg_test/1/state');
         });
     })
 });
