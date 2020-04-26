@@ -9,7 +9,7 @@ import {map} from "rxjs/operators";
  *
  * @type {string}
  */
-const kTangoIdSeparator = '/';
+export const kTangoIdSeparator = '/';
 
 /**
  *
@@ -17,7 +17,7 @@ const kTangoIdSeparator = '/';
  * @since 22.10.2019
  */
 export class TangoId {
-    constructor({host, port, domain, family, device, member}) {
+    constructor({host, port, domain, family, device, member} = {}) {
         this.tango_host = host;
         this.tango_port = port;
         this.tango_domain = domain;
@@ -181,26 +181,52 @@ export class TangoId {
     }
 }
 
+class TangoEntity {
+    /**
+     *
+     * @param {TangoId} id
+     */
+    constructor(id) {
+        this.id = id
+    }
+
+    get host(){
+        return this.id.tango_host;
+    }
+
+    get port(){
+        return this.id.tango_port;
+    }
+
+    get device(){
+        return this.id.getTangoDeviceName();
+    }
+
+    get name(){
+        return this.id.tango_member;
+    }
+}
+
 /**
  * @class [TangoDevice]
  * @memberof tango
  */
-export class TangoDevice {
+export class TangoDevice extends TangoEntity{
     /**
      *
-     * @param rest
-     * @param host
-     * @param port
-     * @param name
-     * @param alias
+     * @param {TangoRestApi} rest
+     * @param {TangoId} id
+     * @param {string} alias
      * @constructor
      */
-    constructor({rest, host, port, name, alias} = {}) {
+    constructor({rest, id, alias= undefined}) {
+        super(id);
         this.rest = rest;
-        this.host = host;
-        this.port = parseInt(port);
-        this.name = name;
         this.alias = alias;
+    }
+
+    get name(){
+        return this.id.getTangoDeviceName();
     }
 
     /**
@@ -219,7 +245,7 @@ export class TangoDevice {
      * @return {TangoCommand}
      */
     newCommand(name){
-        return new TangoCommand({...this, device: this.name, name});
+        return new TangoCommand({rest: this.rest, id: this.id.member(name)});
     }
 
     /**
@@ -228,7 +254,7 @@ export class TangoDevice {
      * @return {TangoAttribute}
      */
     newAttribute(name){
-        return new TangoAttribute({...this, device: this.name, name});
+        return new TangoAttribute({rest: this.rest, id: this.id.member(name)});
     }
 
     /**
@@ -237,7 +263,7 @@ export class TangoDevice {
      * @return {TangoPipe}
      */
     newPipe(name){
-        return new TangoPipe({...this, device: this.name, name});
+        return new TangoPipe({rest: this.rest, id: this.id.member(name)});
     }
 
     /**
@@ -288,13 +314,15 @@ export class TangoDevice {
  * @memberOf tango
  * @class [TangoPipe]
  */
-export class TangoPipe {
-    constructor({rest, host, port, device, name} = {}) {
+export class TangoPipe extends TangoEntity {
+    /**
+     *
+     * @param {TangoRestApi} rest
+     * @param {TangoId} id
+     */
+    constructor({rest, id} = {}) {
+        super(id);
         this.rest = rest;
-        this.host = host;
-        this.port = parseInt(port);
-        this.device = device;
-        this.name = name;
     }
 
     /**
@@ -310,7 +338,7 @@ export class TangoPipe {
      * @return {TangoDevice}
      */
     tangoDevice(){
-        return new TangoDevice({...this, name: this.device});
+        return new TangoDevice({...this});
     }
 
     /**
@@ -343,13 +371,15 @@ export class TangoPipe {
  * @memberOf tango
  * @class [TangoCommand]
  */
-export class TangoCommand {
-    constructor({rest, host, port, device, name} = {port:10000}) {
+export class TangoCommand extends TangoEntity {
+    /**
+     *
+     * @param {TangoRestApi} rest
+     * @param {TangoId} id
+     */
+    constructor({rest, id}) {
+        super(id)
         this.rest = rest;
-        this.host = host;
-        this.port = parseInt(port);
-        this.device = device;
-        this.name = name;
     }
 
     /**
@@ -365,7 +395,7 @@ export class TangoCommand {
      * @return {TangoDevice}
      */
     tangoDevice(){
-        return new TangoDevice({...this, name: this.device});
+        return new TangoDevice({...this});
     }
 
     /**
@@ -391,22 +421,16 @@ export class TangoCommand {
  * @memberOf tango
  * @class [TangoAttribute]
  */
-export class TangoAttribute {
+export class TangoAttribute extends TangoEntity {
     /**
      *
      * @constructor
      * @param {TangoRestApi} rest
-     * @param host
-     * @param port
-     * @param device
-     * @param name
+     * @param {TangoId} id
      */
-    constructor({rest, host, port, device, name}) {
+    constructor({rest, id}) {
+        super(id);
         this.rest = rest;
-        this.host = host;
-        this.port = parseInt(port);
-        this.device = device;
-        this.name = name;
     }
 
     tangoHost(){
@@ -414,7 +438,7 @@ export class TangoAttribute {
     }
 
     tangoDevice(){
-        return new TangoDevice({...this, name: this.device});
+        return new TangoDevice({...this});
     }
 
     /**
@@ -473,7 +497,7 @@ export class TangoAttribute {
 
     toTangoRestApiRequest() {
         return this.rest.toTangoRestApiRequest()
-            .hosts(this.host)
+            .hosts(this.host, this.port)
             .devices(this.device)
             .attributes(this.name)
     }
@@ -484,11 +508,15 @@ export class TangoAttribute {
  * @memberOf tango
  * @class [TangoHost]
  */
-export class TangoHost {
-    constructor({rest, host, port} = {}) {
+export class TangoHost extends TangoEntity {
+    /**
+     *
+     * @param {TangoRestApi} rest
+     * @param {TangoId} id
+     */
+    constructor({rest, id}) {
+        super(id);
         this.rest = rest;
-        this.host = host;
-        this.port = parseInt(port);
     }
 
     /**
@@ -513,7 +541,7 @@ export class TangoHost {
             .devices(name)
             .get()
             .pipe(
-                map(resp => new TangoDevice({...this,name, alias:resp.alias}))
+                map(resp => new TangoDevice({rest: this.rest, id: TangoId.fromDeviceId(`${this.id.getTangoHostId()}/${name}`), alias:resp.alias}))
             );
     }
 
@@ -526,13 +554,12 @@ export class TangoHost {
             .hosts(this.host, this.port)
             .get('?filter=name')
             .pipe(
-                map(resp => new TangoDatabase({rest: this.rest, host:this.host, port: this.port, name: resp.name}))
+                map(resp => new TangoDatabase({rest: this.rest, id: TangoId.fromDeviceId(`${this.id.getTangoHostId()}/${resp.name}`)}))
             );
     }
 
     /**
      *
-     * @param {TangoRestApiV10} rest
      * @param {string} wildcard
      * @returns {Promise<[{name, href}]>}
      *
@@ -540,7 +567,7 @@ export class TangoHost {
     devices(wildcard) {
         return this.toTangoRestApiRequest()
             .devices()
-            .get(`?${wildcard}`)
+            .get(`?wildcard=${wildcard}`)
     }
 
     /**
@@ -556,8 +583,8 @@ export class TangoHost {
  * @memberOf tango
  */
 export class TangoDatabase extends TangoDevice {
-    constructor({rest, host, port, name}){
-        super({rest, host, port, name, alias: `${host}:${port}`})
+    constructor({rest, id}){
+        super({rest, id, alias: `${id.tango_host}:${id.tango_port}`})
     }
 
     /**
@@ -595,6 +622,7 @@ export class TangoDatabase extends TangoDevice {
     /**
      *
      * @param svalue
+     * @return {Observable<*>}
      */
     addDevice(svalue) {
         return this.newCommand("DbAddDevice").execute(svalue);
@@ -602,6 +630,7 @@ export class TangoDatabase extends TangoDevice {
     /**
      *
      * @param wildcard
+     * @return {Observable<*>}
      */
     deviceDomainList(wildcard = "*") {
         return this.newCommand("DbGetDeviceDomainList").execute(wildcard);
@@ -609,6 +638,7 @@ export class TangoDatabase extends TangoDevice {
     /**
      *
      * @param wildcard
+     * @return {Observable<*>}
      */
     deviceFamilyList(wildcard = "*/*") {
         return this.newCommand("DbGetDeviceFamilyList").execute(wildcard);
@@ -616,6 +646,7 @@ export class TangoDatabase extends TangoDevice {
     /**
      *
      * @param wildcard
+     * @return {Observable<*>}
      */
     deviceMemberList(wildcard = "*/*/*") {
         return this.newCommand("DbGetDeviceMemberList").execute(wildcard);
@@ -623,7 +654,7 @@ export class TangoDatabase extends TangoDevice {
     /**
      *
      * @param {[]} args
-     * @returns {Promise}
+     * @returns {Observable<*>}
      */
     deviceProperty(args) {
         return this.newCommand("DbGetDeviceProperty").execute(args);
@@ -631,7 +662,7 @@ export class TangoDatabase extends TangoDevice {
     /**
      *
      * @param {string} device
-     * @return {Promise}
+     * @return {Observable<*>}
      */
     deleteDevice(device) {
         return this.newCommand("DbDeleteDevice").execute(device);
@@ -640,7 +671,7 @@ export class TangoDatabase extends TangoDevice {
      *
      * @param {string} device
      * @param {string} alias
-     * @returns {Promise}
+     * @returns {Observable<*>}
      */
     putDeviceAlias(device, alias){
         return this.newCommand("DbPutDeviceAlias").execute([device, alias]);
@@ -648,9 +679,81 @@ export class TangoDatabase extends TangoDevice {
     /**
      *
      * @param {string} alias
-     * @returns {Promise}
+     * @returns {Observable<*>}
      */
     deleteDeviceAlias(alias){
         return this.newCommand("DbDeleteDeviceAlias").execute(alias);
+    }
+}
+
+export class TangoAdminDevice extends TangoDevice {
+    constructor({rest, id}) {
+        super({rest, id, alias: id.getTangoDeviceName()});
+    }
+
+    /**
+     * @param longStringValue
+     * @returns {Observable<*>}
+     */
+    addObjPolling(longStringValue) {
+        return this.newCommand('AddObjPolling').execute(longStringValue);
+    }
+    /**
+     * @param longStringValue
+     * @returns {Observable<*>}
+     */
+    updObjPollingPeriod(longStringValue) {
+        return this.newCommand('UpdObjPollingPeriod').execute(longStringValue);
+    }
+    /**
+     * @param args
+     * @returns {Observable<*>}
+     */
+    remObjPolling(args) {
+        return this.newCommand('RemObjPolling').execute(args);
+    }
+    /**
+     *
+     * @param {string} device_name
+     * @param {{polling_type:string, name:string,polled:boolean}} pollable
+     * @param {boolean} polled - new polling state
+     * @param {int} poll_rate - new poll rate
+     * @return {polled:boolean, poll_rate:int} pollable
+     */
+    updatePolling(device_name, pollable, polled, poll_rate = 0){
+        if (polled)
+            if (!pollable.polled)
+                return this.addObjPolling({
+                    lvalue: [poll_rate],
+                    svalue: [device_name, pollable.polling_type, pollable.name]
+                });
+            else
+                return this.updObjPollingPeriod({
+                    lvalue: [poll_rate],
+                    svalue: [device_name, pollable.polling_type, pollable.name]
+                });
+        else if (pollable.polled)
+            return this.remObjPolling([device_name, pollable.polling_type, pollable.name]);
+    }
+    /**
+     * @param {} args
+     * @returns {Observable<*>}
+     */
+    getLoggingLevel(args) {
+        return this.newCommand("GetLoggingLevel").execute(args);
+    }
+    /**
+     * @param {string} arg - device name
+     * @returns {Observable<*>}
+     */
+    getLoggingTarget(arg) {
+        return this.newCommand("GetLoggingTarget").execute(arg);
+    }
+    /**
+     * @param device
+     * @returns {Observable<*>}
+     */
+    devPollStatus(device) {
+        return this.newCommand('DevPollStatus').execute(device);
     }
 }

@@ -18,10 +18,10 @@ describe('TangoRestApiRequest', function() {
         it('should get without error', function(done) {
             const req = new TangoRestApiRequest(tango_rest_api_url, {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
             req.get().toPromise()
                 .then((resp)=> {
                     console.log(resp);
@@ -35,10 +35,10 @@ describe('TangoRestApiRequest', function() {
         it('should receive an error', function(done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}/hosts`, {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
             req.get().toPromise()
                 .then((resp)=> {
                     console.log(resp);
@@ -52,10 +52,10 @@ describe('TangoRestApiRequest', function() {
         it('should get Tango host without error', function(done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}/hosts/localhost`, {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
             req.get().toPromise()
                 .then((resp)=> {
                     console.log(resp);
@@ -69,10 +69,10 @@ describe('TangoRestApiRequest', function() {
         it('should get Tango device without error', function(done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}/hosts/localhost/devices/sys/tg_test/1`, {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
             req.get().toPromise()
                 .then((resp)=> {
                     console.log(resp);
@@ -86,10 +86,10 @@ describe('TangoRestApiRequest', function() {
         it('should get sys/tg_test/1/double_scalar without error', function(done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}`, {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
             req.hosts('localhost')
                 .devices('sys/tg_test/1')
                 .attributes('double_scalar')
@@ -105,13 +105,13 @@ describe('TangoRestApiRequest', function() {
                 });
         });
 
-        it('should get sys/tg_test/1/double_scalar without error', function (done) {
+        it('should get sys/tg_test/1/double_scalar value without error; long form', function (done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}`, {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
             req.hosts('localhost', 10000)
                 .devices('sys/tg_test/1')
                 .attributes('double_scalar')
@@ -130,10 +130,10 @@ describe('TangoRestApiRequest', function() {
         it('should fail - unknown tango port', function (done) {
             const req = new TangoRestApiRequest(`${tango_rest_api_url}`, {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            },fetch);
+                }
+            });
             req.hosts('localhost', 12345)
                 .devices('sys/tg_test/1')
                 .attributes('double_scalar')
@@ -152,10 +152,10 @@ describe('TangoRestApiRequest', function() {
         it('should get localhost:10000 without error', function (done) {
             const req = new TangoRestApi('http://localhost:10001', {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
 
             req.newTangoHost({host:'localhost', port:10000})
                 .info()
@@ -173,10 +173,10 @@ describe('TangoRestApiRequest', function() {
         it('should get localhost:10000/sys/tg_test/1 without error', function (done) {
             const req = new TangoRestApi('http://localhost:10001', {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
 
             req.newTangoDevice({host:'localhost', port: 10000, device: 'sys/tg_test/1'})
                 .info()
@@ -194,10 +194,10 @@ describe('TangoRestApiRequest', function() {
         it('should get devices without error', function (done) {
             const req = new TangoRestApi('http://localhost:10001', {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
 
             req.toTangoRestApiRequest()
                 .hosts('localhost')
@@ -217,10 +217,10 @@ describe('TangoRestApiRequest', function() {
         it('should get sys/tg_test/1/double_scalar without error', function (done) {
             const req = new TangoRestApi('http://localhost:10001', {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
 
             req.newTangoAttribute({host:'localhost', port:10000, device:'sys/tg_test/1', name:'double_scalar'})
                 .read()
@@ -238,10 +238,10 @@ describe('TangoRestApiRequest', function() {
         it('should fail to get sys/tg_test/1/double_scalar', function (done) {
             const req = new TangoRestApi('http://localhost:10001', {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('q:1')
-                })
-            }, fetch);
+                }
+            });
 
             req.newTangoAttribute({host:'localhost', port:10000, device:'sys/tg_test/1', name:'double_scalar'})
                 .read()
@@ -258,10 +258,10 @@ describe('TangoRestApiRequest', function() {
         it('should fail to get sys/tg_test/1/double_spectrum_ro', function (done) {
             const req = new TangoRestApi('http://localhost:10001', {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic '+btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
 
             req.newTangoAttribute({host:'localhost', port:10000, device:'sys/tg_test/1', name:'double_spectrum_ro'})
                 .read()
@@ -280,10 +280,10 @@ describe('TangoRestApiRequest', function() {
         it("get database", function(done){
             const req = new TangoRestApi('http://localhost:10001', {
                 mode: 'cors',
-                headers: new Headers({
+                headers: {
                     'Authorization': 'Basic ' + btoa('tango-cs:tango')
-                })
-            }, fetch);
+                }
+            });
 
             req.newTangoHost({host:'localhost', port: 10000})
                 .database()

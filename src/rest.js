@@ -3,7 +3,7 @@
  * @author Igor Khokhriakov <igor.khokhriakov@hzg.de>
  * @since 27.11.2019
  */
-import {TangoAttribute, TangoCommand, TangoDevice, TangoHost, TangoPipe} from "./tango";
+import {kTangoIdSeparator, TangoAttribute, TangoCommand, TangoDevice, TangoHost, TangoId, TangoPipe} from "./tango";
 import {from, throwError} from "rxjs";
 import {catchError, switchMap} from "rxjs/operators";
 import {fromFetch} from "rxjs/fetch";
@@ -24,23 +24,31 @@ export class TangoRestApi {
     }
 
     newTangoHost({host='localhost', port=10000} = {}){
-        return new TangoHost({rest: this, host, port})
+        return new TangoHost({rest: this, id: new TangoId().host(host).port(port)});
     }
 
-    newTangoAttribute({host='localhost', port = 10000, device, name} = {}){
-        return new TangoAttribute({rest: this, host, port, device, name});
+    newTangoAttribute({host='localhost', port = 10000, domain, family, device, name} = {}){
+        if(domain === undefined && family === undefined)
+            [domain, family, device] = device.split(kTangoIdSeparator);
+        return new TangoAttribute({rest: this, id: new TangoId().host(host).port(port).domain(domain).family(family).device(device).member(name)});
     }
 
-    newTangoCommand({host='localhost', port = 10000, device, name} = {}){
-        return new TangoCommand({rest: this, host, port, device, name});
+    newTangoCommand({host='localhost', port = 10000, domain, family, device, name} = {}){
+        if(domain === undefined && family === undefined)
+            [domain, family, device] = device.split(kTangoIdSeparator);
+        return new TangoCommand({rest: this, id: new TangoId().host(host).port(port).domain(domain).family(family).device(device).member(name)});
     }
 
-    newTangoPipe({host='localhost', port = 10000, device, name} = {}){
-        return new TangoPipe({rest: this, host, port, device, name})
+    newTangoPipe({host='localhost', port = 10000, domain, family, device, name} = {}){
+        if(domain === undefined && family === undefined)
+            [domain, family, device] = device.split(kTangoIdSeparator);
+        return new TangoPipe({rest: this, id: new TangoId().host(host).port(port).domain(domain).family(family).device(device).member(name)})
     }
 
-    newTangoDevice({host='localhost', port=10000, device} = {}){
-        return new TangoDevice({rest: this, host, port, device});
+    newTangoDevice({host='localhost', port=10000, domain, family, device} = {}){
+        if(domain === undefined && family === undefined)
+            [domain, family, device] = device.split(kTangoIdSeparator);
+        return new TangoDevice({rest: this, id: new TangoId().host(host).port(port).domain(domain).family(family).device(device)});
     }
 
     /**
