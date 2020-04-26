@@ -17,13 +17,13 @@ export const kTangoIdSeparator = '/';
  * @since 22.10.2019
  */
 export class TangoId {
-    constructor({host, port, domain, family, device, member} = {}) {
-        this.tango_host = host;
-        this.tango_port = port;
-        this.tango_domain = domain;
-        this.tango_family = family;
-        this.tango_device = device;
-        this.tango_member = member;
+    constructor({host, port, domain, family, device, name} = {}) {
+        this.host = host;
+        this.port = port;
+        this.domain = domain;
+        this.family = family;
+        this.device = device;
+        this.name = name;
     }
 
 
@@ -32,8 +32,8 @@ export class TangoId {
      * @param {string} [host='localhost'] host
      * @return {TangoId}
      */
-    host(host='localhost'){
-        this.tango_host = host;
+    setHost(host='localhost'){
+        this.host = host;
         return this;
     }
 
@@ -42,8 +42,8 @@ export class TangoId {
      * @param {string|int} [port=10000] port
      * @return {TangoId}
      */
-    port(port=10000){
-        this.tango_port = port;
+    setPort(port=10000){
+        this.port = port;
         return this;
     }
 
@@ -53,7 +53,7 @@ export class TangoId {
      * @return {string}
      */
     getTangoHostId(){
-        return `${this.tango_host}:${this.tango_port}`;
+        return `${this.host}:${this.port}`;
     }
 
     /**
@@ -61,8 +61,8 @@ export class TangoId {
      * @param {string} domain
      * @return {TangoId}
      */
-    domain(domain){
-        this.tango_domain = domain;
+    setDomain(domain){
+        this.domain = domain;
         return this;
     }
 
@@ -71,8 +71,8 @@ export class TangoId {
      * @param {string} family
      * @return {TangoId}
      */
-    family(family){
-        this.tango_family = family;
+    setFamily(family){
+        this.family = family;
         return this;
     }
 
@@ -81,8 +81,8 @@ export class TangoId {
      * @param {string} device
      * @return {TangoId}
      */
-    device(device){
-        this.tango_device = device;
+    setDevice(device){
+        this.device = device;
         return this;
     }
 
@@ -101,16 +101,16 @@ export class TangoId {
      * @return {string}
      */
     getTangoDeviceName(){
-        return `${this.tango_domain}/${this.tango_family}/${this.tango_device}`
+        return `${this.domain}/${this.family}/${this.device}`
     }
 
     /**
      *
-     * @param {string} member
+     * @param {string} name
      * @return {TangoId}
      */
-    member(member){
-        this.tango_member = member;
+    setName(name){
+        this.name = name;
         return this;
     }
 
@@ -120,7 +120,7 @@ export class TangoId {
      * @return {string}
      */
     getTangoMemberId(){
-        return `${this.getTangoHostId()}/${this.getTangoDeviceName()}/${this.tango_member}`
+        return `${this.getTangoHostId()}/${this.getTangoDeviceName()}/${this.name}`
     }
 
     /**
@@ -174,10 +174,10 @@ export class TangoId {
      * @return {TangoId}
      */
     static fromMemberId(memberId){
-        const member = memberId.split(kTangoIdSeparator).pop();
+        const name = memberId.split(kTangoIdSeparator).pop();
 
         return this.fromDeviceId(memberId)
-                        .member(member)
+                        .setName(name)
     }
 }
 
@@ -191,11 +191,11 @@ class TangoEntity {
     }
 
     get host(){
-        return this.id.tango_host;
+        return this.id.host;
     }
 
     get port(){
-        return this.id.tango_port;
+        return this.id.port;
     }
 
     get device(){
@@ -203,7 +203,7 @@ class TangoEntity {
     }
 
     get name(){
-        return this.id.tango_member;
+        return this.id.name;
     }
 }
 
@@ -245,7 +245,7 @@ export class TangoDevice extends TangoEntity{
      * @return {TangoCommand}
      */
     newCommand(name){
-        return new TangoCommand({rest: this.rest, id: this.id.member(name)});
+        return new TangoCommand({rest: this.rest, id: this.id.setName(name)});
     }
 
     /**
@@ -254,7 +254,7 @@ export class TangoDevice extends TangoEntity{
      * @return {TangoAttribute}
      */
     newAttribute(name){
-        return new TangoAttribute({rest: this.rest, id: this.id.member(name)});
+        return new TangoAttribute({rest: this.rest, id: this.id.setName(name)});
     }
 
     /**
@@ -263,7 +263,7 @@ export class TangoDevice extends TangoEntity{
      * @return {TangoPipe}
      */
     newPipe(name){
-        return new TangoPipe({rest: this.rest, id: this.id.member(name)});
+        return new TangoPipe({rest: this.rest, id: this.id.setName(name)});
     }
 
     /**

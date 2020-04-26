@@ -24,31 +24,31 @@ export class TangoRestApi {
     }
 
     newTangoHost({host='localhost', port=10000} = {}){
-        return new TangoHost({rest: this, id: new TangoId().host(host).port(port)});
+        return new TangoHost({rest: this, id: new TangoId({host,port})});
     }
 
     newTangoAttribute({host='localhost', port = 10000, domain, family, device, name} = {}){
         if(domain === undefined && family === undefined)
             [domain, family, device] = device.split(kTangoIdSeparator);
-        return new TangoAttribute({rest: this, id: new TangoId().host(host).port(port).domain(domain).family(family).device(device).member(name)});
+        return new TangoAttribute({rest: this, id: new TangoId({host,port,domain,family,device,name})});
     }
 
     newTangoCommand({host='localhost', port = 10000, domain, family, device, name} = {}){
         if(domain === undefined && family === undefined)
             [domain, family, device] = device.split(kTangoIdSeparator);
-        return new TangoCommand({rest: this, id: new TangoId().host(host).port(port).domain(domain).family(family).device(device).member(name)});
+        return new TangoCommand({rest: this, id: new TangoId({host,port,domain,family,device,name})});
     }
 
     newTangoPipe({host='localhost', port = 10000, domain, family, device, name} = {}){
         if(domain === undefined && family === undefined)
             [domain, family, device] = device.split(kTangoIdSeparator);
-        return new TangoPipe({rest: this, id: new TangoId().host(host).port(port).domain(domain).family(family).device(device).member(name)})
+        return new TangoPipe({rest: this, id: new TangoId({host, port, domain, family, device, name})})
     }
 
     newTangoDevice({host='localhost', port=10000, domain, family, device} = {}){
         if(domain === undefined && family === undefined)
             [domain, family, device] = device.split(kTangoIdSeparator);
-        return new TangoDevice({rest: this, id: new TangoId().host(host).port(port).domain(domain).family(family).device(device)});
+        return new TangoDevice({rest: this, id: new TangoId({host, port, domain, family, device})});
     }
 
     /**
