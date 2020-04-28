@@ -278,40 +278,51 @@ export class TangoDevice extends TangoEntity{
             .pipe(map(resp => resp.info));
     }
 
-    attributes(){
+    /**
+     *
+     * @param name
+     * @return {TangoRestApiRequest}
+     */
+    attributes(name = undefined){
         return this.rest.toTangoRestApiRequest()
             .hosts(this.host, this.port)
             .devices(this.name)
-            .attributes()
-            .get();
-    }
-
-    commands(){
-        return this.rest.toTangoRestApiRequest()
-            .hosts(this.host, this.port)
-            .devices(this.name)
-            .commands()
-            .get();
-    }
-
-    pipes(){
-        return this.rest.toTangoRestApiRequest()
-            .hosts(this.host, this.port)
-            .devices(this.name)
-            .pipes()
-            .get();
+            .attributes(name);
     }
 
     /**
      *
-     * @return {Observable<*>}
+     * @param name
+     * @return {TangoRestApiRequest}
      */
-    properties(){
+    commands(name = undefined){
         return this.rest.toTangoRestApiRequest()
             .hosts(this.host, this.port)
             .devices(this.name)
-            .properties()
-            .get();
+            .commands(name);
+    }
+
+    /**
+     *
+     * @param name
+     * @return {TangoRestApiRequest}
+     */
+    pipes(name = undefined){
+        return this.rest.toTangoRestApiRequest()
+            .hosts(this.host, this.port)
+            .devices(this.name)
+            .pipes(name);
+    }
+
+    /**
+     *
+     * @return {TangoRestApiRequest}
+     */
+    properties(name = undefined){
+        return this.rest.toTangoRestApiRequest()
+            .hosts(this.host, this.port)
+            .devices(this.name)
+            .properties(name);
     }
 
     /**
@@ -320,6 +331,7 @@ export class TangoDevice extends TangoEntity{
      * @return {Observable<*>}
      */
     eventStream(subscriptions){
+        //TODO subscribe to interface change event
         return merge(
             subscriptions.observe({host:`${this.host}:${this.port}`,device: this.name, attribute: 'state', type: 'change'}),
             subscriptions.observe({host:`${this.host}:${this.port}`,device: this.name, attribute: 'status', type: 'change'}),
