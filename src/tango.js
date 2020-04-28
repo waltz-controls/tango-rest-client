@@ -306,7 +306,7 @@ export class TangoDevice extends TangoEntity{
      *
      */
     toTangoRestApiRequest() {
-        return this.rest.toTangoRestApiRequest().devices(this.name);
+        return this.rest.toTangoRestApiRequest().hosts(this.host, this.port).devices(this.name);
     }
 }
 
