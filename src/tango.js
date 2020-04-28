@@ -278,6 +278,30 @@ export class TangoDevice extends TangoEntity{
             .pipe(map(resp => resp.info));
     }
 
+    attributes(){
+        return this.rest.toTangoRestApiRequest()
+            .hosts(this.host, this.port)
+            .devices(this.name)
+            .attributes()
+            .get();
+    }
+
+    commands(){
+        return this.rest.toTangoRestApiRequest()
+            .hosts(this.host, this.port)
+            .devices(this.name)
+            .commands()
+            .get();
+    }
+
+    pipes(){
+        return this.rest.toTangoRestApiRequest()
+            .hosts(this.host, this.port)
+            .devices(this.name)
+            .pipes()
+            .get();
+    }
+
     /**
      *
      * @return {Observable<*>}
