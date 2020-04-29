@@ -195,16 +195,23 @@ export class TangoRestApiRequest
     /**
      *
      * @param {string} [what=''] what
+     * @param {*} [options={}] options
      * @returns {Observable<*>}
      */
-    get(what = '') {
+    get(what = '', options = {}) {
         if (what) this.url += what;
-        const options = {
+        const finalOptions = {
             ...this.options,
-            method: "GET"
+            ...options,
+            method: "GET",
+            headers: {
+                ...this.options.headers,
+                "Accept": "application/json",
+                ...options.headers
+            }
         }
 
-        return fromFetch(this.url, options).pipe(
+        return fromFetch(this.url, finalOptions).pipe(
             catchError(onFailure.bind(this)),
             switchMap(onSuccess)
         );
@@ -216,20 +223,22 @@ export class TangoRestApiRequest
      * @param {*} [data] data
      * @returns {Observable<*>}
      */
-    post(what = '', data) {
+    post(what = '', data, options = {}) {
         if (what) this.url += what;//TODO if no what is provided data will be treated as what -> failure
-        const options = {
+        const finalOptions = {
             ...this.options,
+            ...options,
             method: "POST",
             headers: {
                 ...this.options.headers,
+                ...options.headers,
                 "Content-type": "application/json"
             }
         };
         if(data)
-            options.body = (typeof data == 'object') ? JSON.stringify(data) : data;
+            finalOptions.body = (typeof data == 'object') ? JSON.stringify(data) : data;
 
-        return fromFetch(this.url, options).pipe(
+        return fromFetch(this.url, finalOptions).pipe(
             catchError(onFailure.bind(this)),
             switchMap(onSuccess)
         )
@@ -239,21 +248,24 @@ export class TangoRestApiRequest
      *
      * @param {string} [what=''] what
      * @param {*} [data] data
+     * @param {*} [options={}] options
      * @returns {Observable<*>}
      */
-    put(what = '', data = {}) {
+    put(what = '', data = {}, options = {}) {
         if (what) this.url += what;//TODO if no what is provided data will be treated as what -> failure
-        const options = {
+        const finalOptions = {
             ...this.options,
+            ...options,
             method: 'put',
             headers: {
                 ...this.options.headers,
+                ...options.headers,
                 "Content-type": "application/json"
             },
             body: (typeof data == 'object') ? JSON.stringify(data) : data
         }
 
-        return fromFetch(this.url, options).pipe(
+        return fromFetch(this.url, finalOptions).pipe(
             catchError(onFailure.bind(this)),
             switchMap(onSuccess)
         );
@@ -264,14 +276,15 @@ export class TangoRestApiRequest
      * @param {string} [what=''] what
      * @returns {Observable<*>}
      */
-    "delete"(what='') {
+    "delete"(what='', options = {}) {
         if (what) this.url += what;
-        const options = {
+        const finalOptions = {
             ...this.options,
+            ...options,
             method: "DELETE"
         }
 
-        return fromFetch(this.url, options).pipe(
+        return fromFetch(this.url, finalOptions).pipe(
             catchError(onFailure.bind(this)),
             switchMap(onSuccess)
         );

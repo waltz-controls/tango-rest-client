@@ -490,10 +490,10 @@ export class TangoAttribute extends TangoEntity {
      *
      * @returns {Observable<*>}
      */
-    read() {
+    read(options = {}) {
         return this.toTangoRestApiRequest()
             .value()
-            .get()
+            .get('',options)
     }
 
     /**
@@ -501,10 +501,10 @@ export class TangoAttribute extends TangoEntity {
      * @param v
      * @returns {Observable<*>}
      */
-    write(v){
+    write(v, options){
         return this.toTangoRestApiRequest()
             .value()
-            .put(`?v=${v}`);
+            .put(`?v=${v}`, options);
     }
 
     /**

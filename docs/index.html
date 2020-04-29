@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset='utf-8'>
-  <title>@waltz-controls/tango-rest-client 1.3.5 | Documentation</title>
+  <title>@waltz-controls/tango-rest-client 1.3.6 | Documentation</title>
   <meta name='description' content='JS client for Tango REST API'>
   <meta name='viewport' content='width=device-width,initial-scale=1'>
   <link href='assets/bass.css' rel='stylesheet'>
@@ -15,7 +15,7 @@
       <div id='split-left' class='overflow-auto fs0 height-viewport-100'>
         <div class='py1 px2'>
           <h3 class='mb0 no-anchor'>@waltz-controls/tango-rest-client</h3>
-          <div class='mb1'><code>1.3.5</code></div>
+          <div class='mb1'><code>1.3.6</code></div>
           <input
             placeholder='Filter'
             id='filter-input'
@@ -2229,7 +2229,7 @@
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>get(what)</span>
+            <span class='code strong strong truncate'>get(what, options)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -2238,7 +2238,7 @@
   
 
   
-    <div class='pre p1 fill-light mt0'>get(what: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>): Observable&#x3C;any></div>
+    <div class='pre p1 fill-light mt0'>get(what: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, options: any): Observable&#x3C;any></div>
   
   
 
@@ -2258,6 +2258,16 @@
             <span class='code bold'>what</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>
             = <code>&#39;&#39;</code>)</code>
 	    what
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>options</span> <code class='quiet'>(any
+            = <code>{}</code>)</code>
+	    options
 
           </div>
           
@@ -2300,7 +2310,7 @@
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>post(what, data?)</span>
+            <span class='code strong strong truncate'>post(what, data?, options)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -2309,7 +2319,7 @@
   
 
   
-    <div class='pre p1 fill-light mt0'>post(what: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, data: any?): Observable&#x3C;any></div>
+    <div class='pre p1 fill-light mt0'>post(what: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, data: any?, options: any): Observable&#x3C;any></div>
   
   
 
@@ -2339,6 +2349,15 @@
             <span class='code bold'>data</span> <code class='quiet'>(any?)</code>
 	    data
 
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>options</span> <code class='quiet'>(any
+            = <code>{}</code>)</code>
+	    
           </div>
           
         </div>
@@ -2380,7 +2399,7 @@
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>put(what, data = {})</span>
+            <span class='code strong strong truncate'>put(what, data = {}, options)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -2389,7 +2408,7 @@
   
 
   
-    <div class='pre p1 fill-light mt0'>put(what: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, data: any?): Observable&#x3C;any></div>
+    <div class='pre p1 fill-light mt0'>put(what: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, data: any?, options: any): Observable&#x3C;any></div>
   
   
 
@@ -2419,6 +2438,16 @@
             <span class='code bold'>data</span> <code class='quiet'>(any?
             = <code>{}</code>)</code>
 	    data
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>options</span> <code class='quiet'>(any
+            = <code>{}</code>)</code>
+	    options
 
           </div>
           
@@ -2461,7 +2490,7 @@
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>pipe(what)</span>
+            <span class='code strong strong truncate'>pipe(what, options)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -2470,7 +2499,7 @@
   
 
   
-    <div class='pre p1 fill-light mt0'>pipe(what: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>): Observable&#x3C;any></div>
+    <div class='pre p1 fill-light mt0'>pipe(what: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, options: any): Observable&#x3C;any></div>
   
   
 
@@ -2491,6 +2520,15 @@
             = <code>&#39;&#39;</code>)</code>
 	    what
 
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>options</span> <code class='quiet'>(any
+            = <code>{}</code>)</code>
+	    
           </div>
           
         </div>
@@ -5974,7 +6012,7 @@
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>read()</span>
+            <span class='code strong strong truncate'>read(options)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -5983,7 +6021,7 @@
   
 
   
-    <div class='pre p1 fill-light mt0'>read(): Observable&#x3C;any></div>
+    <div class='pre p1 fill-light mt0'>read(options: any): Observable&#x3C;any></div>
   
   
 
@@ -5994,6 +6032,20 @@
   
   
 
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>options</span> <code class='quiet'>(any
+            = <code>{}</code>)</code>
+	    
+          </div>
+          
+        </div>
+      
+    </div>
   
 
   
@@ -6030,7 +6082,7 @@
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>write(v)</span>
+            <span class='code strong strong truncate'>write(v, options)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -6039,7 +6091,7 @@
   
 
   
-    <div class='pre p1 fill-light mt0'>write(v: any): Observable&#x3C;any></div>
+    <div class='pre p1 fill-light mt0'>write(v: any, options: any): Observable&#x3C;any></div>
   
   
 
@@ -6057,6 +6109,14 @@
         <div class='space-bottom0'>
           <div>
             <span class='code bold'>v</span> <code class='quiet'>(any)</code>
+	    
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>options</span> <code class='quiet'>(any)</code>
 	    
           </div>
           
