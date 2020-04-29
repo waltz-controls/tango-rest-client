@@ -179,6 +179,15 @@ export class TangoId {
         return this.fromDeviceId(memberId)
                         .setName(name)
     }
+
+
+    /**
+     *
+     * @return {string}
+     */
+    toString(){
+        return `${this.getTangoHostId()}${this.device ? "/" + this.getTangoDeviceId():""}${this.name ? "/" + this.name: ""}`;
+    }
 }
 
 class TangoEntity {
