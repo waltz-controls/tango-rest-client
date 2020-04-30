@@ -395,6 +395,7 @@ export class TangoPipe extends TangoEntity {
             .hosts(this.host, this.port)
             .devices(this.device)
             .pipes(this.name)
+            .value()
             .get()
     }
 
@@ -408,6 +409,7 @@ export class TangoPipe extends TangoEntity {
             .hosts(this.host, this.port)
             .devices(this.device)
             .pipes(this.name)
+            .value()
             .put('', v)
     }
 }

@@ -324,6 +324,26 @@ describe('TangoRestApiRequest', function() {
                     done();//TODO rest-server#189
                 });
         });
+
+        it('should get sys/tg_test/1/string_long_short_ro', function (done) {
+            const req = new TangoRestApi('http://localhost:10001', {
+                mode: 'cors',
+                headers: {
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                }
+            });
+
+            req.newTangoPipe({device:'sys/tg_test/1', name:'string_long_short_ro'})
+                .read()
+                .toPromise()
+                .then((resp) => {
+                    console.log(resp);
+                    done();
+                })
+                .catch(err => {
+                    console.error(err);
+                });
+        });
     });
 
     describe('#database', function(){
