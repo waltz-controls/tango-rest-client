@@ -510,6 +510,15 @@ export class TangoAttribute extends TangoEntity {
     }
 
     /**
+     *
+     * @return {Observable<*>}
+     */
+    history(){
+        return this.toTangoRestApiRequest()
+            .get("/history");
+    }
+
+    /**
      * Opens an event stream for this attribute
      *
      * @param {Subscriptions} subscriptions
