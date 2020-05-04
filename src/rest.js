@@ -4,7 +4,7 @@
  * @since 27.11.2019
  */
 import {kTangoIdSeparator, TangoAttribute, TangoCommand, TangoDevice, TangoHost, TangoId, TangoPipe} from "./tango";
-import {from, throwError} from "rxjs";
+import {from, of, throwError} from "rxjs";
 import {catchError, switchMap} from "rxjs/operators";
 import {fromFetch} from "rxjs/fetch";
 
