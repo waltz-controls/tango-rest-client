@@ -89,10 +89,12 @@ function extract(resp, accept){
  */
 function onSuccess(resp){
     const accept = this.headers["Accept"] || this.headers["accept"];
-    if(resp.ok)
+    if(resp.ok && resp.status === 200)
         return from(extract(resp, accept));
     else {
         switch (resp.status) {
+            case 204:
+                return of();
             case 400:
             case 404:
                 return from(resp.json()).pipe(
