@@ -64,11 +64,33 @@ export class TangoRestApi {
  *
  * @private
  * @param resp
+ * @param accept
+ * @return {Promise<string>|Promise<*>}
+ */
+function extract(resp, accept){
+    if(accept && accept === "text/plain")
+        return resp.text()
+            .then(text => {
+                try{
+                    return JSON.parse(text)
+                } catch (e) {
+                    return text;
+                }
+            });
+    else
+        return resp.json();
+}
+
+/**
+ *
+ * @private
+ * @param resp
  * @return {Observable<*>}
  */
 function onSuccess(resp){
+    const accept = this.headers["Accept"] || this.headers["accept"];
     if(resp.ok)
-        return from(resp.json());
+        return from(extract(resp, accept));
     else {
         switch (resp.status) {
             case 400:
@@ -213,7 +235,7 @@ export class TangoRestApiRequest
 
         return fromFetch(this.url, finalOptions).pipe(
             catchError(onFailure.bind(this)),
-            switchMap(onSuccess)
+            switchMap(onSuccess.bind(finalOptions))
         );
     }
 
@@ -240,7 +262,7 @@ export class TangoRestApiRequest
 
         return fromFetch(this.url, finalOptions).pipe(
             catchError(onFailure.bind(this)),
-            switchMap(onSuccess)
+            switchMap(onSuccess.bind(finalOptions))
         )
     }
 
@@ -267,7 +289,7 @@ export class TangoRestApiRequest
 
         return fromFetch(this.url, finalOptions).pipe(
             catchError(onFailure.bind(this)),
-            switchMap(onSuccess)
+            switchMap(onSuccess.bind(finalOptions))
         );
     }
 
@@ -286,7 +308,7 @@ export class TangoRestApiRequest
 
         return fromFetch(this.url, finalOptions).pipe(
             catchError(onFailure.bind(this)),
-            switchMap(onSuccess)
+            switchMap(onSuccess.bind(finalOptions))
         );
     }
 }

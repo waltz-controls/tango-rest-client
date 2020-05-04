@@ -280,7 +280,7 @@ describe('TangoRestApiRequest', function() {
                 });
         });
 
-        it('should fail to get sys/tg_test/1/double_spectrum_ro', function (done) {
+        it('should get sys/tg_test/1/double_spectrum_ro', function (done) {
             const req = new TangoRestApi('http://localhost:10001', {
                 mode: 'cors',
                 headers: {
@@ -300,7 +300,7 @@ describe('TangoRestApiRequest', function() {
                 });
         });
 
-        it('should fail to get sys/tg_test/1/double_spectrum_ro as plain', function (done) {
+        it('should get sys/tg_test/1/double_spectrum_ro as plain', function (done) {
             const req = new TangoRestApi('http://localhost:10001', {
                 mode: 'cors',
                 headers: {
@@ -317,11 +317,34 @@ describe('TangoRestApiRequest', function() {
                 .toPromise()
                 .then((resp) => {
                     console.log(resp);
-                    // done();
+                    done();
                 })
                 .catch(err => {
                     console.error(err);
-                    done();//TODO rest-server#189
+                });
+        });
+
+        it('should get sys/tg_test/1/Status as plain', function (done) {
+            const req = new TangoRestApi('http://localhost:10001', {
+                mode: 'cors',
+                headers: {
+                    'Authorization': 'Basic '+btoa('tango-cs:tango')
+                }
+            });
+
+            req.newTangoAttribute({host:'localhost', port:10000, device:'sys/tg_test/1', name:'Status'})
+                .read({
+                    headers: {
+                        "Accept":"text/plain"
+                    }
+                })
+                .toPromise()
+                .then((resp) => {
+                    console.log(resp);
+                    done();
+                })
+                .catch(err => {
+                    console.error(err);
                 });
         });
 
