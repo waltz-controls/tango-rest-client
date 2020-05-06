@@ -244,7 +244,7 @@ export class TangoDevice extends TangoEntity{
      * @returns {TangoHost}
      * @memberof tango.TangoDevice
      */
-    asTangoHost() {
+    toTangoHost() {
         return new TangoHost({...this})
     }
 
@@ -376,7 +376,7 @@ export class TangoPipe extends TangoEntity {
      *
      * @return {TangoHost}
      */
-    tangoHost(){
+    toTangoHost(){
         return new TangoHost({...this});
     }
 
@@ -384,7 +384,7 @@ export class TangoPipe extends TangoEntity {
      *
      * @return {TangoDevice}
      */
-    tangoDevice(){
+    toTangoDevice(){
         return new TangoDevice({...this});
     }
 
@@ -393,10 +393,7 @@ export class TangoPipe extends TangoEntity {
      * @returns {Observable<*>}
      */
     read(){
-        return this.rest.toTangoRestApiRequest()
-            .hosts(this.host, this.port)
-            .devices(this.device)
-            .pipes(this.name)
+        return this.toTangoRestApiRequest()
             .value()
             .get()
     }
@@ -407,12 +404,16 @@ export class TangoPipe extends TangoEntity {
      * @return {Observable<*>}
      */
     write(v){
+        return this.toTangoRestApiRequest()
+            .value()
+            .put('', v)
+    }
+
+    toTangoRestApiRequest(){
         return this.rest.toTangoRestApiRequest()
             .hosts(this.host, this.port)
             .devices(this.device)
             .pipes(this.name)
-            .value()
-            .put('', v)
     }
 }
 
@@ -435,7 +436,7 @@ export class TangoCommand extends TangoEntity {
      *
      * @return {TangoHost}
      */
-    tangoHost(){
+    toTangoHost(){
         return new TangoHost({...this});
     }
 
@@ -443,7 +444,7 @@ export class TangoCommand extends TangoEntity {
      *
      * @return {TangoDevice}
      */
-    tangoDevice(){
+    toTangoDevice(){
         return new TangoDevice({...this});
     }
 
@@ -453,16 +454,20 @@ export class TangoCommand extends TangoEntity {
      * @returns {Observable<*>}
      */
     execute(argin){
-        return this.rest.toTangoRestApiRequest()
-            .hosts(this.host, this.port)
-            .devices(this.device)
-            .commands(this.name)
+        return this.toTangoRestApiRequest()
             .put('?filter=!input', {
                 host: `${this.host}:${this.port}`,
                 device: this.device,
                 name: this.name,
                 input: argin
             })
+    }
+
+    toTangoRestApiRequest(){
+        return this.rest.toTangoRestApiRequest()
+            .hosts(this.host, this.port)
+            .devices(this.device)
+            .commands(this.name)
     }
 }
 
@@ -482,11 +487,11 @@ export class TangoAttribute extends TangoEntity {
         this.rest = rest;
     }
 
-    tangoHost(){
+    toTangoHost(){
         return new TangoHost({...this});
     }
 
-    tangoDevice(){
+    toTangoDevice(){
         return new TangoDevice({...this});
     }
 
