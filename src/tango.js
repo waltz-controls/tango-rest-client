@@ -266,7 +266,7 @@ export class TangoDevice extends TangoEntity{
      * @return {TangoCommand}
      */
     newCommand(name){
-        return new TangoCommand({rest: this.rest, id: this.id.setName(name)});
+        return new TangoCommand({rest: this.rest, id: new TangoId(this.id.setName(name))});
     }
 
     /**
@@ -275,7 +275,7 @@ export class TangoDevice extends TangoEntity{
      * @return {TangoAttribute}
      */
     newAttribute(name){
-        return new TangoAttribute({rest: this.rest, id: this.id.setName(name)});
+        return new TangoAttribute({rest: this.rest, id: new TangoId(this.id.setName(name))});
     }
 
     /**
@@ -284,7 +284,7 @@ export class TangoDevice extends TangoEntity{
      * @return {TangoPipe}
      */
     newPipe(name){
-        return new TangoPipe({rest: this.rest, id: this.id.setName(name)});
+        return new TangoPipe({rest: this.rest, id: new TangoId(this.id.setName(name))});
     }
 
     /**
